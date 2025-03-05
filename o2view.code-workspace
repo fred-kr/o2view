@@ -1,0 +1,47 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/dist": true,
+			"**/build": true,
+			"**/output": true,
+			"**/pickles": true,
+			"**/.idea": true,
+		},
+		"python.analysis.exclude": [
+			"**/__pycache__",
+			".git",
+			".venv",
+			"**/tests/**",
+			".mypy_cache/**",
+			".pytest_cache/**",
+			".ruff_cache/**",
+			"**/dist/**",
+			"**/build/**",
+			"**/output/**",
+			"**/.idea/**",
+		],
+		"python.analysis.typeCheckingMode": "basic",
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#7ac0c4",
+			"activityBar.background": "#7ac0c4",
+			"activityBar.foreground": "#15202b",
+			"activityBar.inactiveForeground": "#15202b99",
+			"activityBarBadge.background": "#b14eab",
+			"activityBarBadge.foreground": "#e7e7e7",
+			"commandCenter.border": "#15202b99",
+			"editorGroup.border": "#7ac0c4",
+			"sash.hoverBorder": "#7ac0c4",
+			"tab.activeBorder": "#7ac0c4",
+			"titleBar.activeBackground": "#57afb4",
+			"titleBar.activeForeground": "#15202b",
+			"titleBar.inactiveBackground": "#57afb499",
+			"titleBar.inactiveForeground": "#15202b99"
+		},
+		"peacock.color": "#57afb4"
+	}
+}
