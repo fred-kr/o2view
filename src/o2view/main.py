@@ -5,6 +5,7 @@ from multiprocessing import Condition, Process
 
 import setproctitle
 import webview
+
 from o2view.domino import terminate_when_process_dies
 from o2view.server import start_dash
 
@@ -14,7 +15,7 @@ def start() -> None:
     host = os.getenv("O2VIEW_HOST", "127.0.0.1")
 
     server_is_started = Condition()
-    setproctitle.setproctitle("o2-view")
+    setproctitle.setproctitle("o2view")
 
     p = Process(target=start_dash, args=(host, port, server_is_started))
     p.start()
