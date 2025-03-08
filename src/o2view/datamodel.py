@@ -256,8 +256,8 @@ class LinearFit:
 
 
 class DataSet:
-    def __init__(self, filename: str, df: pl.DataFrame) -> None:
-        self.file_path = Path(filename)
+    def __init__(self, file_path: str, df: pl.DataFrame) -> None:
+        self.file_path = file_path
         self.df = df
         self.fig = make_subplots(specs=[[{"secondary_y": True}]])
         self.fits: list[LinearFit] = []
@@ -270,11 +270,62 @@ class DataSet:
         return self.df.columns
 
     @property
-    def name(self) -> str:
-        return self.file_path.stem
+    def source_file_name(self) -> str:
+        return Path(self.file_path).name
 
     @property
-    def export_name(self) -> str:
-        return f"{self.name}_results.csv"
+    def source_file_stem(self) -> str:
+        return Path(self.file_path).stem
 
-    
+    def plot(self, x_name: str, y_name: str, y2_name: str | None = None, theme: str = "simple_white") -> go.Figure:
+        self._x_name = x_name
+        self._y_name = y_name
+        self._y2_name = y2_name
+        x = self.df.get_column(x_name)
+        y = self.df.get_column(y_name)
+        y2 = self.df.get_column(y2_name) if y2_name is not None else None
+        self.fig.add_scattergl(
+            x=x,
+            y=y,
+            name=y_name,
+            mode="markers",
+            marker=dict(color="royalblue", symbol="circle-open", opacity=0.2, size=3),
+            secondary_y=False,
+        )
+        self.fig.update_xaxes(title_text=x_name)
+        self.fig.update_yaxes(rangemode="tozero")
+        self.fig.update_yaxes(title_text=y_name, secondary_y=False)
+        if y2 is not None:
+            self.fig.add_scattergl(
+                x=x,
+                y=y2,
+                name=y2_name,
+                mode="markers",
+                marker=dict(color="crimson", symbol="cross", size=3),
+                secondary_y=True,
+            )
+            self.fig.update_yaxes(title_text=y2_name, secondary_y=True)
+        self.fig.update_layout(clickmode="event+select", template=theme, dragmode="select", autosize=True, height=600)
+        return self.fig
+
+    def add_fit(self, start_index: int, end_index: int) -> None:
+        if not self._x_name or not self._y_name:
+            return
+        fit_df = self.df.slice(start_index, end_index - start_index + 1)
+        fit = LinearFit(start_index, end_index, fit_df, self._x_name, self._y_name, self._y2_name)
+        self.fits.append(fit)
+        self.fits.sort(key=lambda fit: fit.start_index)
+
+        self.fig.add_scattergl(
+            x=fit.x_data,
+            y=fit.y_fitted,
+            mode="lines",
+            line=dict(color="darkorange", width=4),
+            name=f"Fit {self.fits.index(fit) + 1}",
+            hoverinfo="name+text",
+            hovertext=f"slope={fit.result.slope:.4f}<br>r^2={fit.result.rvalue**2:.3f}<br>y2_mean={fit.y2_mean:.1f}",
+        )
+
+    def make_result_table(self) -> pl.DataFrame:
+        self.fits.sort(key=lambda fit: fit.start_index)
+        return pl.concat(fit.make_result(self.source_file_name, i) for i, fit in enumerate(self.fits, start=1))

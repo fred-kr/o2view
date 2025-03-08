@@ -2,6 +2,9 @@ version = 1
 revision = 1
 requires-python = ">=3.13"
 
+[options]
+prerelease-mode = "allow"
+
 [[package]]
 name = "blinker"
 version = "1.9.0"
@@ -108,12 +111,9 @@ wheels = [
 
 [[package]]
 name = "dash"
-version = "2.18.2"
+version = "3.0.0rc4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "dash-core-components" },
-    { name = "dash-html-components" },
-    { name = "dash-table" },
     { name = "flask" },
     { name = "importlib-metadata" },
     { name = "nest-asyncio" },
@@ -121,63 +121,46 @@ dependencies = [
     { name = "requests" },
     { name = "retrying" },
     { name = "setuptools" },
+    { name = "stringcase" },
     { name = "typing-extensions" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cf/ae/dfd8c42c83cad1b903e4e3e7be7042074d5d7d16be97eaede6656b8ead95/dash-2.18.2.tar.gz", hash = "sha256:20e8404f73d0fe88ce2eae33c25bbc513cbe52f30d23a401fa5f24dbb44296c8", size = 7457235 }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/46/9c13b16b44e506c6cb1a6198c5359fa7b8f83dec6a6a95779477d133cc98/dash-3.0.0rc4.tar.gz", hash = "sha256:26b7105b3e37ed145cc268af3d19b1b06029bc7a7132f5b22e8f2d8c257c81c7", size = 7466167 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/72/ef/d46131f4817f18b329e4fb7c53ba1d31774239d91266a74bccdc932708cc/dash-2.18.2-py3-none-any.whl", hash = "sha256:0ce0479d1bc958e934630e2de7023b8a4558f23ce1f9f5a4b34b65eb3903a869", size = 7792658 },
+    { url = "https://files.pythonhosted.org/packages/5f/84/8335ea958c5e667c313ed961299d43dc5aa2a05b6f1aa89114ff90a7e283/dash-3.0.0rc4-py3-none-any.whl", hash = "sha256:2b284a581b62f068b2f0b5998818c16191104a4c40ab07ded41185ca92a874e5", size = 7818169 },
 ]
 
 [[package]]
 name = "dash-ag-grid"
-version = "31.3.0"
+version = "31.3.1rc1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/36/a9da325e066c18bdc8373d22f4751af79d6de999557c4822cfd7ebe5ef5c/dash_ag_grid-31.3.0.tar.gz", hash = "sha256:8f609601d25225a53130d5a2da1f43c685dc640c777a7de80bbaa070ded3d19c", size = 3858138 }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/d1/40b3026e3c84b008cf02785b90bf146fab64017b42b03317033c291442a1/dash_ag_grid-31.3.1rc1.tar.gz", hash = "sha256:78ceada6c9bc77bb15df87b63fe3d4fc4d5925c2009e29d99987cfa887e02d54", size = 3859215 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/be/bbca053d741cc6ae5333bf3263be520c308b122cd3e4d720fd598231809b/dash_ag_grid-31.3.0-py3-none-any.whl", hash = "sha256:a174c00b816d03a969c5af61a60f8f6b61af5a9b7058633c86424db99e62875b", size = 3876384 },
+    { url = "https://files.pythonhosted.org/packages/a2/e9/9bd1864c9bef940a70b954231450d9ba478f85bdb93966569cce84fc98cd/dash_ag_grid-31.3.1rc1-py3-none-any.whl", hash = "sha256:ef17552413c6ac872f81869bd9432473536aab4c266b75732b68c8cac6d1e1ba", size = 3876869 },
 ]
 
 [[package]]
-name = "dash-core-components"
-version = "2.0.0"
+name = "dash-iconify"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/41/55/ad4a2cf9b7d4134779bd8d3a7e5b5f8cc757f421809e07c3e73bb374fdd7/dash_core_components-2.0.0.tar.gz", hash = "sha256:c6733874af975e552f95a1398a16c2ee7df14ce43fa60bb3718a3c6e0b63ffee", size = 3427 }
+sdist = { url = "https://files.pythonhosted.org/packages/49/d2/03483ed3278cd476c34064bec43675fb6da84a6908e995a699eed76ab32d/dash_iconify-0.1.2.tar.gz", hash = "sha256:564774be6b11b0ac3a8999b7137c3d17a1d351d69b673aa313c7228eacc9d143", size = 17347 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/9e/a29f726e84e531a36d56cff187e61d8c96d2cc253c5bcef9a7695acb7e6a/dash_core_components-2.0.0-py3-none-any.whl", hash = "sha256:52b8e8cce13b18d0802ee3acbc5e888cb1248a04968f962d63d070400af2e346", size = 3822 },
-]
-
-[[package]]
-name = "dash-html-components"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/14/c6/957d5e83b620473eb3c8557a253fb01c6a817b10ca43d3ff9d31796f32a6/dash_html_components-2.0.0.tar.gz", hash = "sha256:8703a601080f02619a6390998e0b3da4a5daabe97a1fd7a9cebc09d015f26e50", size = 3840 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/65/1b16b853844ef59b2742a7de74a598f376ac0ab581f0dcc34db294e5c90e/dash_html_components-2.0.0-py3-none-any.whl", hash = "sha256:b42cc903713c9706af03b3f2548bda4be7307a7cf89b7d6eae3da872717d1b63", size = 4092 },
+    { url = "https://files.pythonhosted.org/packages/d2/63/f10cc18533cc9ab899ea81deca9759b3eebe47d01ad95c4e67b6acdada97/dash_iconify-0.1.2-py3-none-any.whl", hash = "sha256:9ab0eda19bb4514e177bf1f8f36947bb9e5b44aba6ce947f22a1cf0f1a45fc14", size = 18928 },
 ]
 
 [[package]]
 name = "dash-mantine-components"
-version = "0.15.3"
+version = "1.0.0rc2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/cc/6c65214304fbe970fb9ab5d7ce6d36d0e4eaa66e604fd22ac9a7b9f5e027/dash_mantine_components-0.15.3.tar.gz", hash = "sha256:265122b30370df46de2dabbe60824e3f0886085b04700677aa1713dfef0a549c", size = 946079 }
+sdist = { url = "https://files.pythonhosted.org/packages/09/6f/f166eb5eefca27f44d69e88300a189530025197805aa29502dfd998e73a1/dash_mantine_components-1.0.0rc2.tar.gz", hash = "sha256:6d07dc3f127bc3a1f52b238b089481c71b28191cc323c21ce78f0a52c96f8b42", size = 1013123 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/48/2fff4292687728de1a172ecb31c4bcf5a656d53fcf1e72f5b088490a2f56/dash_mantine_components-0.15.3-py3-none-any.whl", hash = "sha256:a8ad002ba36848adbca66570383f10203b0edb3e87bdf38209e12b01c52db379", size = 1260944 },
-]
-
-[[package]]
-name = "dash-table"
-version = "5.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3a/81/34983fa0c67125d7fff9d55e5d1a065127bde7ca49ca32d04dedd55f9f35/dash_table-5.0.0.tar.gz", hash = "sha256:18624d693d4c8ef2ddec99a6f167593437a7ea0bf153aa20f318c170c5bc7308", size = 3391 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/ce/43f77dc8e7bbad02a9f88d07bf794eaf68359df756a28bb9f2f78e255bb1/dash_table-5.0.0-py3-none-any.whl", hash = "sha256:19036fa352bb1c11baf38068ec62d172f0515f73ca3276c79dee49b95ddc16c9", size = 3912 },
+    { url = "https://files.pythonhosted.org/packages/82/b4/3ae833c89bcfdb147edf71ee0ac18c4f605a3b7a8bba9e07c7b1e324d487/dash_mantine_components-1.0.0rc2-py3-none-any.whl", hash = "sha256:82be5de00e42b2c2fa1b15872d102e10b87a7c868167439cf31b4d55e9dc8745", size = 1356381 },
 ]
 
 [[package]]
@@ -266,14 +249,14 @@ wheels = [
 
 [[package]]
 name = "jinja2"
-version = "3.1.5"
+version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markupsafe" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/af/92/b3130cbbf5591acf9ade8708c365f3238046ac7cb8ccba6e81abccb0ccff/jinja2-3.1.5.tar.gz", hash = "sha256:8fefff8dc3034e27bb80d67c671eb8a9bc424c0ef4c0826edbff304cceff43bb", size = 244674 }
+sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bd/0f/2ba5fbcd631e3e88689309dbe978c5769e883e4b84ebfe7da30b43275c5a/jinja2-3.1.5-py3-none-any.whl", hash = "sha256:aba0f4dc9ed8013c424088f68a5c226f7d6097ed89b246d7749c2ec4175c6adb", size = 134596 },
+    { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899 },
 ]
 
 [[package]]
@@ -315,11 +298,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "1.29.0"
+version = "1.29.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e6/f7/caa23ebc4aed3ef2314441c44e1d842e701adc6af57587ffda9263c03b6e/narwhals-1.29.0.tar.gz", hash = "sha256:1021c345d56c66ff0cc8e6d03ca8c543d01ffc411630973a5cb69ee86824d823", size = 248349 }
+sdist = { url = "https://files.pythonhosted.org/packages/a7/17/7d35094da0820ae941d8ce51842f253da36c6f95360ea0afabfc18bc02c6/narwhals-1.29.1.tar.gz", hash = "sha256:c408acf09e90c116f247cf34f24a3a89d147e3e235b1d3c708cfd1960baf320a", size = 251464 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/f6/1fcd6b3d0e21d9b75e71ae68fbc92bbb9b9b1f4f33dd81c61d8f53378b30/narwhals-1.29.0-py3-none-any.whl", hash = "sha256:653aa8e5eb435816e7b50c8def17e7e5e3324c2ffd8a3eec03fef85792e9cf5e", size = 305214 },
+    { url = "https://files.pythonhosted.org/packages/f1/22/380df533b08a57bc9013bb5714f33c571e1447828d83213a66adaefc0a04/narwhals-1.29.1-py3-none-any.whl", hash = "sha256:2f68cfbb2562672c4dfa54f158ed8c2828e9920ef784981cd9114e419c444216", size = 308220 },
 ]
 
 [[package]]
@@ -375,6 +358,7 @@ source = { editable = "." }
 dependencies = [
     { name = "dash" },
     { name = "dash-ag-grid" },
+    { name = "dash-iconify" },
     { name = "dash-mantine-components" },
     { name = "flask-caching" },
     { name = "numpy" },
@@ -390,6 +374,7 @@ dependencies = [
 requires-dist = [
     { name = "dash", specifier = ">=2.18.2" },
     { name = "dash-ag-grid", specifier = ">=31.3.0" },
+    { name = "dash-iconify", specifier = ">=0.1.2" },
     { name = "dash-mantine-components", specifier = ">=0.15.3" },
     { name = "flask-caching", specifier = ">=2.3.1" },
     { name = "numpy", specifier = ">=2.2.3" },
@@ -772,6 +757,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050 },
 ]
+
+[[package]]
+name = "stringcase"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/1f/1241aa3d66e8dc1612427b17885f5fcd9c9ee3079fc0d28e9a3aeeb36fa3/stringcase-1.2.0.tar.gz", hash = "sha256:48a06980661908efe8d9d34eab2b6c13aefa2163b3ced26972902e3bdfd87008", size = 2958 }
 
 [[package]]
 name = "typing-extensions"
