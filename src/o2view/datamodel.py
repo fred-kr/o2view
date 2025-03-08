@@ -43,6 +43,8 @@ class PlotlyTemplate(enum.StrEnum):
         return [template.value for template in cls]
 
 
+    # JSON string of the combined fit results. new results are added by reading the string into a df and then concatenating the new result df (obtained from LinearFit.make_result()).
+    
 class SelectedPoint(TypedDict):
     curveNumber: int
     pointNumber: int
@@ -224,7 +226,7 @@ class LinearFit:
     @property
     def y2_mean(self) -> float:
         if self.y2_name is not None:
-            return cast(float, self.df.get_column(self.y2_name).mean())
+            return self.df.get_column(self.y2_name).mean()  # type: ignore
         else:
             return float("nan")
 
@@ -232,11 +234,11 @@ class LinearFit:
     def rsquared(self) -> float:
         return self.result.rvalue**2
 
-    def make_result(self, source_file: str, fit_id: int) -> pl.DataFrame:
+    def make_result(self, source_file: str) -> pl.DataFrame:
         return pl.DataFrame(
             {
                 "source_file": source_file,
-                "fit_id": fit_id,
+                # "fit_id": fit_id,
                 "start_index": self.start_index,
                 "end_index": self.end_index,
                 "slope": self.result.slope,
@@ -328,4 +330,4 @@ class DataSet:
 
     def make_result_table(self) -> pl.DataFrame:
         self.fits.sort(key=lambda fit: fit.start_index)
-        return pl.concat(fit.make_result(self.source_file_name, i) for i, fit in enumerate(self.fits, start=1))
+        return pl.concat(fit.make_result(self.source_file_name) for fit in self.fits)

@@ -1,6 +1,7 @@
+from typing import Literal
+import plotly.graph_objects as go
 import polars as pl
 from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 
 
 def plot_dataset(
@@ -9,6 +10,7 @@ def plot_dataset(
     y_name: str,
     y2_name: str | None = None,
     theme: str = "simple_white",
+    y_rangemode: Literal["normal", "tozero", "nonnegative"] = "normal",
 ) -> go.Figure:
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -25,7 +27,7 @@ def plot_dataset(
         secondary_y=False,
     )
     fig = fig.update_xaxes(title_text=x_name)
-    fig = fig.update_yaxes(rangemode="tozero")
+    fig = fig.update_yaxes(rangemode=y_rangemode)
     fig = fig.update_yaxes(title_text=y_name, secondary_y=False)
     if y2 is not None:
         fig = fig.add_scattergl(
@@ -33,9 +35,38 @@ def plot_dataset(
             y=y2,
             name=y2_name,
             mode="markers",
-            marker=dict(color="crimson", symbol="cross", size=3),
+            marker=dict(color="crimson", symbol="hexagon-open", opacity=0.2, size=3),
             secondary_y=True,
-        )    
+        )
         fig = fig.update_yaxes(title_text=y2_name, secondary_y=True)
-    fig = fig.update_layout(clickmode="event+select", template=theme, dragmode="select", autosize=True, height=700, margin=dict(l=20, r=20, t=20, b=20))
+    fig = fig.update_layout(
+        template=theme,
+        dragmode="select",
+        selectdirection="h",
+        autosize=True,
+        # showlegend=False,
+        height=650,
+        # margin=dict(l=20, r=20, t=20, b=20),
+        legend=dict(entrywidth=0, entrywidthmode="pixels"),
+    )
     return fig
+
+
+def make_fit_trace(
+    x: pl.Series,
+    y_fitted: pl.Series,
+    name: str,
+    slope: float,
+    rsquared: float,
+    y2_mean: float | None = None,
+) -> go.Scattergl:
+    y2_mean = y2_mean or float("nan")
+    return go.Scattergl(
+        x=x.to_list(),
+        y=y_fitted.to_list(),
+        mode="lines",
+        line=dict(color="darkorange", width=4),
+        name=name,
+        hoverinfo="name+text",
+        hovertext=f"slope={slope:.4f}<br>r^2={rsquared**2:.3f}<br>y2_mean={y2_mean:.1f}",
+    )
