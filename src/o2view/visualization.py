@@ -1,7 +1,10 @@
+from pathlib import Path
 from typing import Literal
 import plotly.graph_objects as go
 import polars as pl
 from plotly.subplots import make_subplots
+
+from o2view.datamodel import FigureDict
 
 
 def plot_dataset(
@@ -44,9 +47,7 @@ def plot_dataset(
         dragmode="select",
         selectdirection="h",
         autosize=True,
-        # showlegend=False,
-        height=650,
-        # margin=dict(l=20, r=20, t=20, b=20),
+        height=750,
         legend=dict(entrywidth=0, entrywidthmode="pixels"),
     )
     return fig
@@ -58,6 +59,7 @@ def make_fit_trace(
     name: str,
     slope: float,
     rsquared: float,
+    start_index: int,
     y2_mean: float | None = None,
 ) -> go.Scattergl:
     y2_mean = y2_mean or float("nan")
@@ -67,6 +69,18 @@ def make_fit_trace(
         mode="lines",
         line=dict(color="darkorange", width=4),
         name=name,
-        hoverinfo="name+text",
-        hovertext=f"slope={slope:.4f}<br>r^2={rsquared**2:.3f}<br>y2_mean={y2_mean:.1f}",
+        hoverinfo="text",
+        hovertext=f"start_index={start_index}<br>slope={slope:.4f}<br>r^2={rsquared**2:.3f}<br>y2_mean={y2_mean:.1f}",
+        showlegend=False,
+    )
+
+
+def find_trace_index(figure_dict: FigureDict, source_file: str, start_index: int) -> int:
+    return next(
+        (
+            i
+            for i, trace in enumerate(figure_dict["data"])
+            if trace["name"] == f"{source_file}_{start_index}"
+        ),
+        -1,
     )

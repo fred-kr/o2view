@@ -78,6 +78,11 @@ class LinregressResult(NamedTuple):
         return self.rvalue**2
 
 
+class FigureDict(TypedDict):
+    data: list[dict[str, Any]]
+    layout: dict[str, Any]
+    frames: list[dict[str, Any]]
+
 def detect_delimiter(decoded_string: str, skip_rows: int = 0, sample_rows: int = 3) -> str:
     """
     Detect the delimiter used in a CSV-like text.

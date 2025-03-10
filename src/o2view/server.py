@@ -1,11 +1,11 @@
 import io
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import dash_mantine_components as dmc
 import polars as pl
 import setproctitle
 from dash import (
+    ClientsideFunction,
     Dash,
     Input,
     Output,
@@ -13,6 +13,7 @@ from dash import (
     State,
     _dash_renderer,
     callback,
+    clientside_callback,
     dash_table,
     dcc,
 )
@@ -20,9 +21,9 @@ from dash.dash_table.Format import Format, Scheme
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 
-from o2view.datamodel import LinearFit, PlotlyTemplate, parse_contents
+from o2view.datamodel import FigureDict, LinearFit, PlotlyTemplate, parse_contents
 from o2view.domino import terminate_when_parent_process_dies
-from o2view.visualization import make_fit_trace, plot_dataset
+from o2view.visualization import find_trace_index, make_fit_trace, plot_dataset
 
 if TYPE_CHECKING:
     from multiprocessing.synchronize import Condition
@@ -38,14 +39,29 @@ upload_style = {
 }
 
 
-result_table_columns = [
+result_table_columns: list = [
     {"id": "source_file", "name": "source_file"},
     # {"id": "fit_id", "name": "fit_id"},
     {"id": "start_index", "name": "start_index"},
     {"id": "end_index", "name": "end_index"},
-    {"id": "slope", "name": "slope", "type": "numeric", "format": Format(precision=4, scheme=Scheme.fixed)},
-    {"id": "rsquared", "name": "rsquared", "type": "numeric", "format": Format(precision=3, scheme=Scheme.fixed)},
-    {"id": "y2_mean", "name": "y2_mean", "type": "numeric", "format": Format(precision=1, scheme=Scheme.fixed)},
+    {
+        "id": "slope",
+        "name": "slope",
+        "type": "numeric",
+        "format": Format(precision=4, scheme=Scheme.fixed),
+    },
+    {
+        "id": "rsquared",
+        "name": "rsquared",
+        "type": "numeric",
+        "format": Format(precision=3, scheme=Scheme.fixed),
+    },
+    {
+        "id": "y2_mean",
+        "name": "y2_mean",
+        "type": "numeric",
+        "format": Format(precision=1, scheme=Scheme.fixed),
+    },
     {"id": "x_name", "name": "x_name"},
     {"id": "x_first", "name": "x_first"},
     {"id": "x_last", "name": "x_last"},
@@ -75,6 +91,20 @@ result_df_schema = {
     "y2_last": pl.Float64,
 }
 
+dropdown_separator_data: list = [
+    {"label": "Detect Automatically", "value": "auto"},
+    {"label": "Comma (,)", "value": ","},
+    {"label": "Semicolon (;)", "value": ";"},
+    {"label": "Tab (\\t)", "value": "\t"},
+    {"label": "Pipe (|)", "value": "|"},
+]
+
+dropdown_y_rangemode_data: list = [
+    {"label": "Normal", "value": "normal"},
+    {"label": "Extend to zero", "value": "tozero"},
+    {"label": "Non-negative", "value": "nonnegative"},
+]
+
 
 def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     setproctitle.setproctitle("o2view-dash")
@@ -82,7 +112,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     terminate_when_parent_process_dies()
     _dash_renderer._set_react_version("18.2.0")
 
-    app = Dash(__name__, external_stylesheets=dmc.styles.ALL)  # type: ignore
+    app = Dash(__name__, external_stylesheets=dmc.styles.ALL)
 
     app.layout = dmc.MantineProvider(
         dmc.Container(
@@ -108,13 +138,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 dmc.Select(
                                     id="dropdown-separator",
                                     label="Column Separator",
-                                    data=[
-                                        {"label": "Detect Automatically", "value": "auto"},
-                                        {"label": "Comma (,)", "value": ","},
-                                        {"label": "Semicolon (;)", "value": ";"},
-                                        {"label": "Tab (\\t)", "value": "\t"},
-                                        {"label": "Pipe (|)", "value": "|"},
-                                    ],
+                                    data=dropdown_separator_data,
                                     value="auto",
                                     w="100%",
                                 ),
@@ -132,11 +156,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 dmc.Select(
                                     id="dropdown-y-rangemode",
                                     label="Y-axis Behavior",
-                                    data=[
-                                        {"label": "Default", "value": "normal"},
-                                        {"label": "Extend to zero", "value": "tozero"},
-                                        {"label": "Non-negative", "value": "nonnegative"},
-                                    ],
+                                    data=dropdown_y_rangemode_data,
                                     value="normal",
                                     w="100%",
                                 ),
@@ -153,7 +173,12 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                             children=[
                                 dcc.Upload(
                                     id="upload-data",
-                                    children=dmc.Box(["Drag and Drop or ", dmc.Anchor("Select File", href="#")]),
+                                    children=dmc.Box(
+                                        [
+                                            "Drag and Drop or ",
+                                            dmc.Anchor("Select File", href="#"),
+                                        ]
+                                    ),
                                     multiple=False,
                                     style=upload_style,
                                 ),
@@ -190,8 +215,12 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 dmc.Group(
                                     wrap="nowrap",
                                     children=[
-                                        dmc.Button("Plot", id="btn-make-plot", variant="light"),
-                                        dmc.Button("Add fit", id="btn-add-fit", variant="light"),
+                                        dmc.Button(
+                                            "Plot", id="btn-make-plot", variant="light"
+                                        ),
+                                        dmc.Button(
+                                            "Add fit", id="btn-add-fit", variant="light"
+                                        ),
                                     ],
                                 ),
                                 dmc.Group(
@@ -203,17 +232,23 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                             "Export Results",
                                             id="btn-export-results",
                                             variant="light",
-                                            leftSection=DashIconify(icon="clarity:export-line"),
+                                            leftSection=DashIconify(
+                                                icon="clarity:export-line"
+                                            ),
                                         ),
                                         dmc.Button(
                                             "Clear Dataset",
                                             id="btn-clear-dataset",
                                             variant="light",
-                                            leftSection=DashIconify(icon="clarity:remove-line"),
+                                            leftSection=DashIconify(
+                                                icon="clarity:remove-line"
+                                            ),
                                         ),
                                         dmc.ActionIcon(
                                             id="btn-show-settings",
-                                            children=DashIconify(icon="clarity:settings-line", width=20),
+                                            children=DashIconify(
+                                                icon="clarity:settings-line", width=20
+                                            ),
                                             size="input-sm",
                                             variant="light",
                                         ),
@@ -224,67 +259,93 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                     ],
                 ),
                 dmc.Box(
-                    dcc.Graph(
-                        id="graph",
-                        config={
-                            "editSelection": False,
-                            "displaylogo": False,
-                            "scrollZoom": True,
-                            "doubleClick": "reset+autosize",
-                        },
-                    )
-                ),
-                dmc.Box(
-                    dmc.Tabs(
+                    dcc.Loading(
                         [
-                            dmc.TabsList(
-                                [
-                                    dmc.TabsTab("Results", value="results"),
-                                    dmc.TabsTab("Current Dataset", value="dataset"),
-                                ]
-                            ),
-                            dmc.TabsPanel(
-                                dmc.Box(
-                                    [
-                                        dash_table.DataTable(
-                                            id="table-results",
-                                            columns=result_table_columns,  # type: ignore
-                                            sort_action="native",
-                                            style_header={
-                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                "fontWeight": "bold",
-                                                "textAlign": "left",
-                                            },
-                                            style_cell={"textAlign": "left"},
-                                            style_table={"overflowX": "auto"},
-                                            row_deletable=True,
-                                            data=[],
-                                        ),
-                                        dcc.Download(id="download-results"),
-                                    ]
-                                ),
-                                value="results",
-                            ),
-                            dmc.TabsPanel(
-                                dmc.Box(
-                                    [
-                                        dash_table.DataTable(
-                                            id="table-dataset",
-                                            style_header={
-                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                "fontWeight": "bold",
-                                                "textAlign": "left",
-                                            },
-                                            style_cell={"textAlign": "left"},
-                                            style_table={"overflowX": "scroll"},
-                                        ),
-                                    ]
-                                ),
-                                value="dataset",
-                            ),
+                            dcc.Graph(
+                                id="graph",
+                                config={
+                                    "editSelection": False,
+                                    "displaylogo": False,
+                                    "scrollZoom": False,
+                                    "doubleClick": "reset+autosize",
+                                },
+                            )
                         ],
-                        value="results",
-                    )
+                        overlay_style={
+                            "visibility": "visible",
+                            "opacity": 0.5,
+                            "backgroundColor": "white",
+                        },
+                    ),
+                ),
+                dmc.Affix(
+                    dmc.Button(
+                        "Results & Dataset",
+                        id="btn-show-tables",
+                        variant="light",
+                        leftSection=DashIconify(icon="clarity:table-line", width=20),
+                    ),
+                    position={"bottom": 20, "left": 20},
+                ),
+                dmc.Drawer(
+                    id="drawer-tables",
+                    title="Results & Dataset",
+                    opened=False,
+                    position="bottom",
+                    keepMounted=True,
+                    children=[
+                        dmc.Tabs(
+                            [
+                                dmc.TabsList(
+                                    [
+                                        dmc.TabsTab("Results", value="results"),
+                                        dmc.TabsTab("Current Dataset", value="dataset"),
+                                    ]
+                                ),
+                                dmc.TabsPanel(
+                                    dmc.Box(
+                                        [
+                                            dash_table.DataTable(
+                                                id="table-results",
+                                                columns=result_table_columns,
+                                                data=[],
+                                                page_size=15,
+                                                style_header={
+                                                    "backgroundColor": "rgb(230, 230, 230)",
+                                                    "fontWeight": "bold",
+                                                    "textAlign": "left",
+                                                },
+                                                style_cell={"textAlign": "left"},
+                                                style_table={"overflowX": "auto"},
+                                                row_deletable=True,
+                                            ),
+                                            dcc.Download(id="download-results"),
+                                        ]
+                                    ),
+                                    value="results",
+                                ),
+                                dmc.TabsPanel(
+                                    dmc.Box(
+                                        [
+                                            dash_table.DataTable(
+                                                id="table-dataset",
+                                                page_size=15,
+                                                style_header={
+                                                    "backgroundColor": "rgb(230, 230, 230)",
+                                                    "fontWeight": "bold",
+                                                    "textAlign": "left",
+                                                },
+                                                style_cell={"textAlign": "left"},
+                                                style_table={"overflowX": "scroll"},
+                                            ),
+                                        ]
+                                    ),
+                                    value="dataset",
+                                ),
+                            ],
+                            value="results",
+                        )
+                    ],
                 ),
                 dcc.Store(id="store-dataset"),
                 dcc.Store(id="store-results"),
@@ -292,6 +353,15 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
             ],
         )
     )
+
+    @callback(
+        Output("drawer-tables", "opened"),
+        Input("btn-show-tables", "n_clicks"),
+        State("drawer-tables", "opened"),
+        prevent_initial_call=True,
+    )
+    def toggle_tables(n_clicks: int, opened: bool) -> bool:
+        return not opened
 
     @callback(
         Output("drawer-settings", "opened"),
@@ -311,7 +381,9 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("dropdown-separator", "value"),
         prevent_initial_call=True,
     )
-    def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";") -> tuple[str, str]:
+    def read_presens(
+        contents: str, filename: str, skip_rows: int = 57, separator: str = ";"
+    ) -> tuple[str, str]:
         if not contents or not filename:
             return "", "Current: -"
 
@@ -332,7 +404,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     )
     def populate_controls(data: str):
         if not data:
-            return [], [], [], [], [], "", "", ""
+            raise PreventUpdate
 
         parsed = pl.read_json(io.StringIO(data))
         cols = parsed.columns
@@ -348,39 +420,74 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         )
 
     @callback(
-        Output("graph", "figure", allow_duplicate=True),
+        Output("graph", "figure"),
         Input("store-graph", "data"),
         prevent_initial_call=True,
     )
     def update_graph(data: dict[str, Any]):
         return data or {}
 
+    clientside_callback(
+        ClientsideFunction(
+            namespace="clientside",
+            function_name="updateLoadingState",
+        ),
+        Output("btn-make-plot", "loading", allow_duplicate=True),
+        Input("btn-make-plot", "n_clicks"),
+        prevent_initial_call=True,
+    )
+
     @callback(
         Output("store-graph", "data", allow_duplicate=True),
+        Output("btn-make-plot", "loading"),
         Input("btn-make-plot", "n_clicks"),
-        State("store-dataset", "data"),
+        Input("table-dataset", "data"),
         State("dropdown-x-data", "value"),
         State("dropdown-y-data", "value"),
         State("dropdown-y2-data", "value"),
         State("dropdown-plot-template", "value"),
         State("dropdown-y-rangemode", "value"),
+        State("table-results", "data"),
+        State("upload-data", "filename"),
         prevent_initial_call=True,
     )
     def make_plot(
         n_clicks: int,
-        data: str,
+        data: list[dict[str, Any]],
         x_name: str,
         y_name: str,
         y2_name: str,
         template: str,
         y_rangemode: Literal["normal", "tozero", "nonnegative"],
-    ) -> dict[str, Any]:
+        results: list[dict[str, Any]],
+        filename: str,
+    ) -> tuple[dict[str, Any], bool]:
         if not data:
             raise PreventUpdate
 
-        parsed = pl.read_json(io.StringIO(data))
+        parsed = pl.from_dicts(data)
         fig = plot_dataset(parsed, x_name, y_name, y2_name, template, y_rangemode)
-        return fig.to_dict()
+
+        res_df = pl.from_dicts(results, schema=result_df_schema).filter(
+            pl.col("source_file") == filename
+        )
+        if not res_df.is_empty():
+            for row in res_df.iter_rows():
+                start, stop = row[1], row[2]
+                fit_df = parsed.slice(start, stop - start + 1)
+                fit = LinearFit(start, stop, fit_df, x_name, y_name, y2_name)
+                fit_trace = make_fit_trace(
+                    x=fit.x_data,
+                    y_fitted=fit.y_fitted,
+                    name=f"{filename}_{start}",
+                    slope=fit.result.slope,
+                    rsquared=fit.rsquared,
+                    start_index=start,
+                    y2_mean=fit.y2_mean,
+                )
+                fig.add_trace(fit_trace)
+
+        return fig.to_dict(), False
 
     @callback(
         Output("store-graph", "data", allow_duplicate=True),
@@ -403,7 +510,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         filename: str,
         results: list[dict[str, Any]],
     ):
-        if not selected_data:
+        if not n_clicks or not selected_data:
             raise PreventUpdate
 
         df = pl.from_dicts(
@@ -436,26 +543,65 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
 
         start, stop = idx.item(0), idx.item(-1)
 
-        fit = LinearFit(start_index=start, end_index=stop, df=fit_df, x_name=x_name, y_name=y_name, y2_name=y2_name)
+        fit = LinearFit(
+            start_index=start,
+            end_index=stop,
+            df=fit_df,
+            x_name=x_name,
+            y_name=y_name,
+            y2_name=y2_name,
+        )
 
         result_df = pl.from_dicts(results, schema=result_df_schema)
-        result_df = result_df.extend(fit.make_result(filename))
+        result_df = result_df.extend(fit.make_result(filename)).sort(
+            "source_file", "start_index", maintain_order=True
+        )
 
         fit_trace = make_fit_trace(
             x=fit.x_data,
             y_fitted=fit.y_fitted,
-            name=Path(filename).stem,
+            name=f"{filename}_{fit.start_index}",
             slope=fit.result.slope,
             rsquared=fit.result.rvalue,
+            start_index=fit.start_index,
             y2_mean=fit.y2_mean,
         )
         patched_fig = Patch()
         # Clear the selection region
         patched_fig["layout"]["selections"].clear()
-        # patched_fig["layout"]["selectionrevision"] += 1
 
         patched_fig["data"].append(fit_trace)
         return patched_fig, result_df.to_dicts()
+
+    @callback(
+        Output("store-graph", "data", allow_duplicate=True),
+        Input("table-results", "data_previous"),
+        State("table-results", "data"),
+        State("graph", "figure"),
+        prevent_initial_call=True,
+    )
+    def remove_fit(
+        data_previous: list[dict[str, Any]],
+        data_current: list[dict[str, Any]],
+        fig: FigureDict,
+    ):
+        if not data_previous:
+            raise PreventUpdate
+
+        previous = pl.from_dicts(data_previous, schema=result_df_schema)
+        current = pl.from_dicts(data_current, schema=result_df_schema)
+
+        removed = previous.join(current, on=previous.columns, how="anti")
+
+        patched_fig = Patch()
+        trace_index = find_trace_index(
+            fig, removed.item(0, "source_file"), removed.item(0, "start_index")
+        )
+        if trace_index == -1:
+            raise PreventUpdate
+
+        del patched_fig["data"][trace_index]
+        return patched_fig
 
     @callback(
         Output("download-results", "data"),
@@ -464,8 +610,16 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         prevent_initial_call=True,
     )
     def export_results(n_clicks: int, data: list[dict[str, Any]]) -> dict[str, Any]:
-        df = pl.from_dicts(data)
-        return dcc.send_data_frame(df.write_excel, "results.xlsx")  # type: ignore
+        df = pl.from_dicts(data, schema=result_df_schema)
+        return dcc.send_bytes(df.write_excel, "o2view_results.xlsx")
+
+    @callback(
+        Output("store-dataset", "data"),
+        Input("btn-clear-dataset", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def clear_dataset(n_clicks: int) -> str:
+        return ""
 
     with server_is_started:
         server_is_started.notify()
