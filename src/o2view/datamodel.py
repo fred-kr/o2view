@@ -2,16 +2,15 @@ import base64
 import csv
 import enum
 import io
-from pathlib import Path
-from typing import Annotated, Any, NamedTuple, NotRequired, TypedDict, cast
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Annotated, Any, NamedTuple, NotRequired, TypedDict
 
-from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from scipy import stats
-
 import polars as pl
 import polars.selectors as cs
+from plotly.subplots import make_subplots
+from scipy import stats
 
 import janitor.polars  # noqa: F401 # isort:skip
 
@@ -25,6 +24,7 @@ def _simulate_contents(path: str) -> str:
 
     mime_type, _ = mimetypes.guess_type(path)
     return f"data:{mime_type};base64,{data}"
+
 
 class PlotlyTemplate(enum.StrEnum):
     SIMPLE_WHITE = "simple_white"
@@ -42,9 +42,9 @@ class PlotlyTemplate(enum.StrEnum):
     def all_values(cls) -> list[str]:
         return [template.value for template in cls]
 
-
     # JSON string of the combined fit results. new results are added by reading the string into a df and then concatenating the new result df (obtained from LinearFit.make_result()).
-    
+
+
 class SelectedPoint(TypedDict):
     curveNumber: int
     pointNumber: int
@@ -83,7 +83,10 @@ class FigureDict(TypedDict):
     layout: dict[str, Any]
     frames: list[dict[str, Any]]
 
-def detect_delimiter(decoded_string: str, skip_rows: int = 0, sample_rows: int = 3) -> str:
+
+def detect_delimiter(
+    decoded_string: str, skip_rows: int = 0, sample_rows: int = 3
+) -> str:
     """
     Detect the delimiter used in a CSV-like text.
 
@@ -120,7 +123,9 @@ def detect_delimiter(decoded_string: str, skip_rows: int = 0, sample_rows: int =
         raise ValueError(f"Delimiter detection failed: {str(e)}") from e
 
 
-def parse_contents(contents: str, filename: str, skip_rows: int = 0, separator: str = "auto") -> pl.DataFrame:
+def parse_contents(
+    contents: str, filename: str, skip_rows: int = 0, separator: str = "auto"
+) -> pl.DataFrame:
     """
     Parse base64-encoded file contents into a Polars DataFrame.
 
@@ -154,19 +159,30 @@ def parse_contents(contents: str, filename: str, skip_rows: int = 0, separator: 
 
             # Removes leading and trailing whitespace from each field. Why its there in the first place? Who knows.
             cleaned_content = "\n".join(
-                separator.join(field.strip() for field in line.split(separator)) for line in content_str.splitlines()
+                separator.join(field.strip() for field in line.split(separator))
+                for line in content_str.splitlines()
             )
             df = (
-                pl.scan_csv(io.StringIO(cleaned_content), skip_rows=skip_rows, separator=separator)
+                pl.scan_csv(
+                    io.StringIO(cleaned_content),
+                    skip_rows=skip_rows,
+                    separator=separator,
+                )
                 .select(cs.numeric())
-                .clean_names(remove_special=True, strip_underscores=True, strip_accents=True)  # type: ignore
+                .clean_names(  # type: ignore
+                    remove_special=True, strip_underscores=True, strip_accents=True
+                )
                 .collect()
             )
         elif suffix in {".xlsx", ".xls"}:
             df = (
-                pl.read_excel(io.BytesIO(decoded_bytes), read_options={"skip_rows": skip_rows})
+                pl.read_excel(
+                    io.BytesIO(decoded_bytes), read_options={"skip_rows": skip_rows}
+                )
                 .select(cs.numeric())
-                .clean_names(remove_special=True, strip_underscores=True, strip_accents=True)  # type: ignore
+                .clean_names(  # type: ignore
+                    remove_special=True, strip_underscores=True, strip_accents=True
+                )
             )
         else:
             return pl.DataFrame()
@@ -174,6 +190,7 @@ def parse_contents(contents: str, filename: str, skip_rows: int = 0, separator: 
         return pl.DataFrame()
 
     return df.with_row_index()
+
 
 @dataclass
 class LinearFit:
@@ -213,7 +230,9 @@ class LinearFit:
             intercept_stderr=res.intercept_stderr,
         )
         self.df = self.df.with_columns(
-            (self.result.slope * pl.col(self.x_name) + self.result.intercept).alias("fitted")
+            (self.result.slope * pl.col(self.x_name) + self.result.intercept).alias(
+                "fitted"
+            )
         )
 
     @property
@@ -284,7 +303,13 @@ class DataSet:
     def source_file_stem(self) -> str:
         return Path(self.file_path).stem
 
-    def plot(self, x_name: str, y_name: str, y2_name: str | None = None, theme: str = "simple_white") -> go.Figure:
+    def plot(
+        self,
+        x_name: str,
+        y_name: str,
+        y2_name: str | None = None,
+        theme: str = "simple_white",
+    ) -> go.Figure:
         self._x_name = x_name
         self._y_name = y_name
         self._y2_name = y2_name
@@ -312,14 +337,22 @@ class DataSet:
                 secondary_y=True,
             )
             self.fig.update_yaxes(title_text=y2_name, secondary_y=True)
-        self.fig.update_layout(clickmode="event+select", template=theme, dragmode="select", autosize=True, height=600)
+        self.fig.update_layout(
+            clickmode="event+select",
+            template=theme,
+            dragmode="select",
+            autosize=True,
+            height=600,
+        )
         return self.fig
 
     def add_fit(self, start_index: int, end_index: int) -> None:
         if not self._x_name or not self._y_name:
             return
         fit_df = self.df.slice(start_index, end_index - start_index + 1)
-        fit = LinearFit(start_index, end_index, fit_df, self._x_name, self._y_name, self._y2_name)
+        fit = LinearFit(
+            start_index, end_index, fit_df, self._x_name, self._y_name, self._y2_name
+        )
         self.fits.append(fit)
         self.fits.sort(key=lambda fit: fit.start_index)
 

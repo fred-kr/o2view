@@ -1,5 +1,5 @@
-from pathlib import Path
 from typing import Literal
+
 import plotly.graph_objects as go
 import polars as pl
 from plotly.subplots import make_subplots
@@ -75,7 +75,9 @@ def make_fit_trace(
     )
 
 
-def find_trace_index(figure_dict: FigureDict, source_file: str, start_index: int) -> int:
+def find_trace_index(
+    figure_dict: FigureDict, source_file: str, start_index: int
+) -> int:
     return next(
         (
             i
