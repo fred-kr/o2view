@@ -131,18 +131,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dash-ag-grid"
-version = "31.3.1rc1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dash" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/d1/40b3026e3c84b008cf02785b90bf146fab64017b42b03317033c291442a1/dash_ag_grid-31.3.1rc1.tar.gz", hash = "sha256:78ceada6c9bc77bb15df87b63fe3d4fc4d5925c2009e29d99987cfa887e02d54", size = 3859215 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/e9/9bd1864c9bef940a70b954231450d9ba478f85bdb93966569cce84fc98cd/dash_ag_grid-31.3.1rc1-py3-none-any.whl", hash = "sha256:ef17552413c6ac872f81869bd9432473536aab4c266b75732b68c8cac6d1e1ba", size = 3876869 },
-]
-
-[[package]]
 name = "dash-iconify"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -357,7 +345,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "dash" },
-    { name = "dash-ag-grid" },
     { name = "dash-iconify" },
     { name = "dash-mantine-components" },
     { name = "flask-caching" },
@@ -375,7 +362,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "dash", specifier = ">=2.18.2" },
-    { name = "dash-ag-grid", specifier = ">=31.3.0" },
     { name = "dash-iconify", specifier = ">=0.1.2" },
     { name = "dash-mantine-components", specifier = ">=0.15.3" },
     { name = "flask-caching", specifier = ">=2.3.1" },
