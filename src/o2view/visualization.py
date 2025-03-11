@@ -14,6 +14,7 @@ def plot_dataset(
     y2_name: str | None = None,
     theme: str = "simple_white",
     y_rangemode: Literal["normal", "tozero", "nonnegative"] = "normal",
+    show_legend: bool = True,
 ) -> go.Figure:
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -47,8 +48,9 @@ def plot_dataset(
         dragmode="select",
         selectdirection="h",
         autosize=True,
-        height=750,
-        legend=dict(entrywidth=0, entrywidthmode="pixels"),
+        height=800,
+        showlegend=show_legend,
+        # legend=dict(entrywidth=0, entrywidthmode="pixels"),
     )
     return fig
 

@@ -160,6 +160,11 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     value="normal",
                                     w="100%",
                                 ),
+                                dmc.Switch(
+                                    id="switch-show-legend",
+                                    label="Show Legend",
+                                    checked=True,
+                                ),
                             ],
                         ),
                     ],
@@ -215,12 +220,8 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 dmc.Group(
                                     wrap="nowrap",
                                     children=[
-                                        dmc.Button(
-                                            "Plot", id="btn-make-plot", variant="light"
-                                        ),
-                                        dmc.Button(
-                                            "Add fit", id="btn-add-fit", variant="light"
-                                        ),
+                                        dmc.Button("Plot", id="btn-make-plot", variant="light"),
+                                        dmc.Button("Add fit", id="btn-add-fit", variant="light"),
                                     ],
                                 ),
                                 dmc.Group(
@@ -232,23 +233,17 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                             "Export Results",
                                             id="btn-export-results",
                                             variant="light",
-                                            leftSection=DashIconify(
-                                                icon="clarity:export-line"
-                                            ),
+                                            leftSection=DashIconify(icon="clarity:export-line"),
                                         ),
                                         dmc.Button(
                                             "Clear Dataset",
                                             id="btn-clear-dataset",
                                             variant="light",
-                                            leftSection=DashIconify(
-                                                icon="clarity:remove-line"
-                                            ),
+                                            leftSection=DashIconify(icon="clarity:remove-line"),
                                         ),
                                         dmc.ActionIcon(
                                             id="btn-show-settings",
-                                            children=DashIconify(
-                                                icon="clarity:settings-line", width=20
-                                            ),
+                                            children=DashIconify(icon="clarity:settings-line", width=20),
                                             size="input-sm",
                                             variant="light",
                                         ),
@@ -381,9 +376,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("dropdown-separator", "value"),
         prevent_initial_call=True,
     )
-    def read_presens(
-        contents: str, filename: str, skip_rows: int = 57, separator: str = ";"
-    ) -> tuple[str, str]:
+    def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";") -> tuple[str, str]:
         if not contents or not filename:
             return "", "Current: -"
 
@@ -447,6 +440,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("dropdown-y2-data", "value"),
         State("dropdown-plot-template", "value"),
         State("dropdown-y-rangemode", "value"),
+        State("switch-show-legend", "checked"),
         State("table-results", "data"),
         State("upload-data", "filename"),
         prevent_initial_call=True,
@@ -459,6 +453,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         y2_name: str,
         template: str,
         y_rangemode: Literal["normal", "tozero", "nonnegative"],
+        show_legend: bool,
         results: list[dict[str, Any]],
         filename: str,
     ) -> tuple[dict[str, Any], bool]:
@@ -466,11 +461,9 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
             raise PreventUpdate
 
         parsed = pl.from_dicts(data)
-        fig = plot_dataset(parsed, x_name, y_name, y2_name, template, y_rangemode)
+        fig = plot_dataset(parsed, x_name, y_name, y2_name, template, y_rangemode, show_legend)
 
-        res_df = pl.from_dicts(results, schema=result_df_schema).filter(
-            pl.col("source_file") == filename
-        )
+        res_df = pl.from_dicts(results, schema=result_df_schema).filter(pl.col("source_file") == filename)
         if not res_df.is_empty():
             for row in res_df.iter_rows():
                 start, stop = row[1], row[2]
@@ -553,9 +546,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         )
 
         result_df = pl.from_dicts(results, schema=result_df_schema)
-        result_df = result_df.extend(fit.make_result(filename)).sort(
-            "source_file", "start_index", maintain_order=True
-        )
+        result_df = result_df.extend(fit.make_result(filename)).sort("source_file", "start_index", maintain_order=True)
 
         fit_trace = make_fit_trace(
             x=fit.x_data,
@@ -594,9 +585,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         removed = previous.join(current, on=previous.columns, how="anti")
 
         patched_fig = Patch()
-        trace_index = find_trace_index(
-            fig, removed.item(0, "source_file"), removed.item(0, "start_index")
-        )
+        trace_index = find_trace_index(fig, removed.item(0, "source_file"), removed.item(0, "start_index"))
         if trace_index == -1:
             raise PreventUpdate
 
@@ -612,14 +601,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     def export_results(n_clicks: int, data: list[dict[str, Any]]) -> dict[str, Any]:
         df = pl.from_dicts(data, schema=result_df_schema)
         return dcc.send_bytes(df.write_excel, "o2view_results.xlsx")
-
-    @callback(
-        Output("store-dataset", "data"),
-        Input("btn-clear-dataset", "n_clicks"),
-        prevent_initial_call=True,
-    )
-    def clear_dataset(n_clicks: int) -> str:
-        return ""
 
     with server_is_started:
         server_is_started.notify()
