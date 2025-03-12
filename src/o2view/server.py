@@ -28,6 +28,7 @@ from o2view.visualization import find_trace_index, make_fit_trace, plot_dataset
 if TYPE_CHECKING:
     from multiprocessing.synchronize import Condition
 
+
 upload_style = {
     "width": "350px",
     "height": "60px",
@@ -41,7 +42,6 @@ upload_style = {
 
 result_table_columns: list = [
     {"id": "source_file", "name": "source_file"},
-    # {"id": "fit_id", "name": "fit_id"},
     {"id": "start_index", "name": "start_index"},
     {"id": "end_index", "name": "end_index"},
     {
@@ -111,242 +111,253 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
 
     terminate_when_parent_process_dies()
     _dash_renderer._set_react_version("18.2.0")
-
+    dmc.add_figure_templates()
     app = Dash(__name__, external_stylesheets=dmc.styles.ALL)
 
     app.layout = dmc.MantineProvider(
-        dmc.Container(
-            fluid=True,
-            mt=20,
-            mb=20,
-            children=[
-                dmc.Drawer(
-                    id="drawer-settings",
-                    title="Settings",
-                    opened=False,
-                    position="right",
-                    children=[
-                        dmc.Fieldset(
-                            legend="File Upload",
-                            children=[
-                                dmc.NumberInput(
-                                    id="input-skip-rows",
-                                    label="Skip rows",
-                                    value=57,
-                                    min=0,
+        children=[
+            dmc.Container(
+                fluid=True,
+                mt=20,
+                mb=20,
+                children=[
+                    dmc.Drawer(
+                        id="drawer-settings",
+                        title="Settings",
+                        opened=False,
+                        position="right",
+                        children=[
+                            dmc.Fieldset(
+                                legend="File Upload",
+                                children=[
+                                    dmc.NumberInput(
+                                        id="input-skip-rows",
+                                        label="Skip rows",
+                                        value=57,
+                                        min=0,
+                                    ),
+                                    dmc.Select(
+                                        id="dropdown-separator",
+                                        label="Column Separator",
+                                        data=dropdown_separator_data,
+                                        value="auto",
+                                        w="100%",
+                                    ),
+                                ],
+                            ),
+                            dmc.Fieldset(
+                                legend="Plot",
+                                children=[
+                                    dmc.Select(
+                                        id="dropdown-plot-template",
+                                        label="Theme",
+                                        data=PlotlyTemplate.all_values(),
+                                        value=PlotlyTemplate.YGRIDOFF,
+                                    ),
+                                    dmc.Select(
+                                        id="dropdown-y-rangemode",
+                                        label="Y-axis Behavior",
+                                        data=dropdown_y_rangemode_data,
+                                        value="normal",
+                                        w="100%",
+                                    ),
+                                    dmc.Switch(
+                                        id="switch-show-legend",
+                                        label="Show Legend",
+                                        checked=True,
+                                        mt=10,
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                    dmc.Group(
+                        wrap="nowrap",
+                        align="stretch",
+                        children=[
+                            dmc.Stack(
+                                gap=5,
+                                children=[
+                                    dcc.Upload(
+                                        id="upload-data",
+                                        children=dmc.Box(
+                                            [
+                                                "Drag and Drop or ",
+                                                dmc.Anchor("Select File", href="#"),
+                                            ]
+                                        ),
+                                        multiple=False,
+                                        style=upload_style,
+                                    ),
+                                    dmc.Text("Current: -", id="label-current-file"),
+                                ],
+                            ),
+                            dmc.Group(
+                                wrap="nowrap",
+                                align="baseline",
+                                w="100%",
+                                children=[
+                                    dmc.Select(
+                                        id="dropdown-x-data",
+                                        label="X-axis",
+                                        placeholder="Select one",
+                                        required=True,
+                                        inputWrapperOrder=["input", "label"],
+                                    ),
+                                    dmc.Select(
+                                        id="dropdown-y-data",
+                                        label="Y-axis",
+                                        placeholder="Select one",
+                                        required=True,
+                                        inputWrapperOrder=["input", "label"],
+                                    ),
+                                    dmc.Select(
+                                        id="dropdown-y2-data",
+                                        label="Secondary Y-axis",
+                                        placeholder="Select one (optional)",
+                                        clearable=True,
+                                        allowDeselect=True,
+                                        inputWrapperOrder=["input", "label"],
+                                    ),
+                                    dmc.Group(
+                                        wrap="nowrap",
+                                        flex=1,
+                                        grow=True,
+                                        children=[
+                                            dmc.Button("Plot", id="btn-make-plot", color="indigo", variant="filled"),
+                                            dmc.Button("Add fit", id="btn-add-fit", color="indigo", variant="filled"),
+                                        ],
+                                    ),
+                                    dmc.Group(
+                                        wrap="nowrap",
+                                        justify="flex-end",
+                                        flex=1,
+                                        children=[
+                                            dmc.Tooltip(
+                                                dmc.Button(
+                                                    "Export Results",
+                                                    id="btn-export-results",
+                                                    color="indigo",
+                                                    variant="light",
+                                                    leftSection=DashIconify(icon="clarity:export-line"),
+                                                ),
+                                                label="Export results to Excel",
+                                            ),
+                                            dmc.ActionIcon(
+                                                id="btn-show-settings",
+                                                children=DashIconify(icon="clarity:settings-line", width=20),
+                                                size="input-sm",
+                                                color="indigo",
+                                                variant="light",
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                    dmc.Box(
+                        id="box-fig",
+                        w="100%",
+                        children=[
+                            dcc.Loading(
+                                [
+                                    dcc.Graph(
+                                        id="graph",
+                                        config={
+                                            "editSelection": False,
+                                            "displaylogo": False,
+                                            "scrollZoom": False,
+                                            "doubleClick": "reset",
+                                        },
+                                        style={"height": "85vh"},
+                                    )
+                                ],
+                                overlay_style={
+                                    "visibility": "visible",
+                                    "opacity": 0.5,
+                                    "backgroundColor": "white",
+                                },
+                            ),
+                            dmc.Affix(
+                                dmc.Button(
+                                    "Results & Dataset",
+                                    id="btn-show-tables",
+                                    color="indigo",
+                                    variant="light",
+                                    leftSection=DashIconify(icon="clarity:table-line", width=20),
                                 ),
-                                dmc.Select(
-                                    id="dropdown-separator",
-                                    label="Column Separator",
-                                    data=dropdown_separator_data,
-                                    value="auto",
-                                    w="100%",
-                                ),
-                            ],
-                        ),
-                        dmc.Fieldset(
-                            legend="Plot",
-                            children=[
-                                dmc.Select(
-                                    id="dropdown-plot-template",
-                                    label="Theme",
-                                    data=PlotlyTemplate.all_values(),
-                                    value=PlotlyTemplate.SIMPLE_WHITE,
-                                ),
-                                dmc.Select(
-                                    id="dropdown-y-rangemode",
-                                    label="Y-axis Behavior",
-                                    data=dropdown_y_rangemode_data,
-                                    value="normal",
-                                    w="100%",
-                                ),
-                                dmc.Switch(
-                                    id="switch-show-legend",
-                                    label="Show Legend",
-                                    checked=True,
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-                dmc.Group(
-                    wrap="nowrap",
-                    align="stretch",
-                    children=[
-                        dmc.Stack(
-                            gap=5,
-                            children=[
-                                dcc.Upload(
-                                    id="upload-data",
-                                    children=dmc.Box(
+                                position={"bottom": 20, "left": 20},
+                            ),
+                        ],
+                    ),
+                    dmc.Drawer(
+                        id="drawer-tables",
+                        title="Results & Dataset",
+                        opened=False,
+                        position="bottom",
+                        keepMounted=True,
+                        children=[
+                            dmc.Tabs(
+                                [
+                                    dmc.TabsList(
                                         [
-                                            "Drag and Drop or ",
-                                            dmc.Anchor("Select File", href="#"),
+                                            dmc.TabsTab("Results", value="results"),
+                                            dmc.TabsTab("Current Dataset", value="dataset"),
                                         ]
                                     ),
-                                    multiple=False,
-                                    style=upload_style,
-                                ),
-                                dmc.Text("Current: -", id="label-current-file"),
-                            ],
-                        ),
-                        dmc.Group(
-                            wrap="nowrap",
-                            align="baseline",
-                            w="100%",
-                            children=[
-                                dmc.Select(
-                                    id="dropdown-x-data",
-                                    label="X-axis",
-                                    placeholder="Select one",
-                                    withAsterisk=True,
-                                    inputWrapperOrder=["input", "label"],
-                                ),
-                                dmc.Select(
-                                    id="dropdown-y-data",
-                                    label="Y-axis",
-                                    placeholder="Select one",
-                                    withAsterisk=True,
-                                    inputWrapperOrder=["input", "label"],
-                                ),
-                                dmc.Select(
-                                    id="dropdown-y2-data",
-                                    label="Secondary Y-axis",
-                                    placeholder="Select one (optional)",
-                                    clearable=True,
-                                    allowDeselect=True,
-                                    inputWrapperOrder=["input", "label"],
-                                ),
-                                dmc.Group(
-                                    wrap="nowrap",
-                                    children=[
-                                        dmc.Button("Plot", id="btn-make-plot", variant="light"),
-                                        dmc.Button("Add fit", id="btn-add-fit", variant="light"),
-                                    ],
-                                ),
-                                dmc.Group(
-                                    wrap="nowrap",
-                                    justify="flex-end",
-                                    flex=1,
-                                    children=[
-                                        dmc.Button(
-                                            "Export Results",
-                                            id="btn-export-results",
-                                            variant="light",
-                                            leftSection=DashIconify(icon="clarity:export-line"),
+                                    dmc.TabsPanel(
+                                        dmc.Box(
+                                            [
+                                                dash_table.DataTable(
+                                                    id="table-results",
+                                                    columns=result_table_columns,
+                                                    data=[],
+                                                    page_size=15,
+                                                    style_header={
+                                                        "backgroundColor": "rgb(230, 230, 230)",
+                                                        "fontWeight": "bold",
+                                                        "textAlign": "left",
+                                                    },
+                                                    style_cell={"textAlign": "left"},
+                                                    style_table={"overflowX": "auto"},
+                                                    row_deletable=True,
+                                                ),
+                                                dcc.Download(id="download-results"),
+                                            ]
                                         ),
-                                        dmc.Button(
-                                            "Clear Dataset",
-                                            id="btn-clear-dataset",
-                                            variant="light",
-                                            leftSection=DashIconify(icon="clarity:remove-line"),
+                                        value="results",
+                                    ),
+                                    dmc.TabsPanel(
+                                        dmc.Box(
+                                            [
+                                                dash_table.DataTable(
+                                                    id="table-dataset",
+                                                    page_size=15,
+                                                    style_header={
+                                                        "backgroundColor": "rgb(230, 230, 230)",
+                                                        "fontWeight": "bold",
+                                                        "textAlign": "left",
+                                                    },
+                                                    style_cell={"textAlign": "left"},
+                                                    style_table={"overflowX": "scroll"},
+                                                ),
+                                            ]
                                         ),
-                                        dmc.ActionIcon(
-                                            id="btn-show-settings",
-                                            children=DashIconify(icon="clarity:settings-line", width=20),
-                                            size="input-sm",
-                                            variant="light",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-                dmc.Box(
-                    dcc.Loading(
-                        [
-                            dcc.Graph(
-                                id="graph",
-                                config={
-                                    "editSelection": False,
-                                    "displaylogo": False,
-                                    "scrollZoom": False,
-                                    "doubleClick": "reset+autosize",
-                                },
+                                        value="dataset",
+                                    ),
+                                ],
+                                value="results",
                             )
                         ],
-                        overlay_style={
-                            "visibility": "visible",
-                            "opacity": 0.5,
-                            "backgroundColor": "white",
-                        },
                     ),
-                ),
-                dmc.Affix(
-                    dmc.Button(
-                        "Results & Dataset",
-                        id="btn-show-tables",
-                        variant="light",
-                        leftSection=DashIconify(icon="clarity:table-line", width=20),
-                    ),
-                    position={"bottom": 20, "left": 20},
-                ),
-                dmc.Drawer(
-                    id="drawer-tables",
-                    title="Results & Dataset",
-                    opened=False,
-                    position="bottom",
-                    keepMounted=True,
-                    children=[
-                        dmc.Tabs(
-                            [
-                                dmc.TabsList(
-                                    [
-                                        dmc.TabsTab("Results", value="results"),
-                                        dmc.TabsTab("Current Dataset", value="dataset"),
-                                    ]
-                                ),
-                                dmc.TabsPanel(
-                                    dmc.Box(
-                                        [
-                                            dash_table.DataTable(
-                                                id="table-results",
-                                                columns=result_table_columns,
-                                                data=[],
-                                                page_size=15,
-                                                style_header={
-                                                    "backgroundColor": "rgb(230, 230, 230)",
-                                                    "fontWeight": "bold",
-                                                    "textAlign": "left",
-                                                },
-                                                style_cell={"textAlign": "left"},
-                                                style_table={"overflowX": "auto"},
-                                                row_deletable=True,
-                                            ),
-                                            dcc.Download(id="download-results"),
-                                        ]
-                                    ),
-                                    value="results",
-                                ),
-                                dmc.TabsPanel(
-                                    dmc.Box(
-                                        [
-                                            dash_table.DataTable(
-                                                id="table-dataset",
-                                                page_size=15,
-                                                style_header={
-                                                    "backgroundColor": "rgb(230, 230, 230)",
-                                                    "fontWeight": "bold",
-                                                    "textAlign": "left",
-                                                },
-                                                style_cell={"textAlign": "left"},
-                                                style_table={"overflowX": "scroll"},
-                                            ),
-                                        ]
-                                    ),
-                                    value="dataset",
-                                ),
-                            ],
-                            value="results",
-                        )
-                    ],
-                ),
-                dcc.Store(id="store-dataset"),
-                dcc.Store(id="store-results"),
-                dcc.Store(id="store-graph"),
-            ],
-        )
+                    dcc.Store(id="store-dataset"),
+                    dcc.Store(id="store-results"),
+                    dcc.Store(id="store-graph"),
+                    dmc.Box(id="dummy-div", style={"display": "none"}),
+                ],
+            )
+        ],
     )
 
     @callback(

@@ -28,11 +28,17 @@ def start() -> None:
     time.sleep(0.2)
 
     webview.settings["ALLOW_DOWNLOADS"] = True
+    display: webview.Screen = webview.screens[0]
+    dw = display.width
+    dh = display.height
+    min_size = (min(dw, 800), min(dh, 600))
+
     webview.create_window(
         "O2View",
         f"http://{host}:{port}",
-        width=1600,
-        height=1000,
+        width=min(1600, dw),
+        height=min(1000, dh),
+        min_size=min_size,
     )
     webview.start()
 

@@ -1,3 +1,6 @@
 /* #table-results button.export {
     display: none;
 } */
+input:invalid {
+    outline: none !important;
+}

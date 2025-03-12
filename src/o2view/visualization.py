@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import polars as pl
 from plotly.subplots import make_subplots
 
-from o2view.datamodel import FigureDict
+from o2view.datamodel import FigureDict, PlotlyTemplate
 
 
 def plot_dataset(
@@ -12,7 +12,7 @@ def plot_dataset(
     x_name: str,
     y_name: str,
     y2_name: str | None = None,
-    theme: str = "simple_white",
+    theme: str = PlotlyTemplate.MANTINE_LIGHT,
     y_rangemode: Literal["normal", "tozero", "nonnegative"] = "normal",
     show_legend: bool = True,
 ) -> go.Figure:
@@ -48,9 +48,7 @@ def plot_dataset(
         dragmode="select",
         selectdirection="h",
         autosize=True,
-        height=800,
         showlegend=show_legend,
-        # legend=dict(entrywidth=0, entrywidthmode="pixels"),
     )
     return fig
 
@@ -77,14 +75,8 @@ def make_fit_trace(
     )
 
 
-def find_trace_index(
-    figure_dict: FigureDict, source_file: str, start_index: int
-) -> int:
+def find_trace_index(figure_dict: FigureDict, source_file: str, start_index: int) -> int:
     return next(
-        (
-            i
-            for i, trace in enumerate(figure_dict["data"])
-            if trace["name"] == f"{source_file}_{start_index}"
-        ),
+        (i for i, trace in enumerate(figure_dict["data"]) if trace["name"] == f"{source_file}_{start_index}"),
         -1,
     )

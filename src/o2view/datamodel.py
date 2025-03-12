@@ -28,6 +28,8 @@ def _simulate_contents(path: str) -> str:
 
 class PlotlyTemplate(enum.StrEnum):
     SIMPLE_WHITE = "simple_white"
+    MANTINE_LIGHT = "mantine_light"
+    MANTINE_DARK = "mantine_dark"
     GGPLOT2 = "ggplot2"
     SEABORN = "seaborn"
     PLOTLY = "plotly"
@@ -84,9 +86,7 @@ class FigureDict(TypedDict):
     frames: list[dict[str, Any]]
 
 
-def detect_delimiter(
-    decoded_string: str, skip_rows: int = 0, sample_rows: int = 3
-) -> str:
+def detect_delimiter(decoded_string: str, skip_rows: int = 0, sample_rows: int = 3) -> str:
     """
     Detect the delimiter used in a CSV-like text.
 
@@ -123,9 +123,7 @@ def detect_delimiter(
         raise ValueError(f"Delimiter detection failed: {str(e)}") from e
 
 
-def parse_contents(
-    contents: str, filename: str, skip_rows: int = 0, separator: str = "auto"
-) -> pl.DataFrame:
+def parse_contents(contents: str, filename: str, skip_rows: int = 0, separator: str = "auto") -> pl.DataFrame:
     """
     Parse base64-encoded file contents into a Polars DataFrame.
 
@@ -153,14 +151,14 @@ def parse_contents(
 
     try:
         if suffix in {".csv", ".txt", ".tsv"}:
+            # After some experimenting, pretty sure the encoding used for presens is cp1252
             content_str = decoded_bytes.decode("utf-8", errors="replace")
             if separator == "auto":
                 separator = detect_delimiter(content_str, skip_rows=skip_rows)
 
             # Removes leading and trailing whitespace from each field. Why its there in the first place? Who knows.
             cleaned_content = "\n".join(
-                separator.join(field.strip() for field in line.split(separator))
-                for line in content_str.splitlines()
+                separator.join(field.strip() for field in line.split(separator)) for line in content_str.splitlines()
             )
             df = (
                 pl.scan_csv(
@@ -176,9 +174,7 @@ def parse_contents(
             )
         elif suffix in {".xlsx", ".xls"}:
             df = (
-                pl.read_excel(
-                    io.BytesIO(decoded_bytes), read_options={"skip_rows": skip_rows}
-                )
+                pl.read_excel(io.BytesIO(decoded_bytes), read_options={"skip_rows": skip_rows})
                 .select(cs.numeric())
                 .clean_names(  # type: ignore
                     remove_special=True, strip_underscores=True, strip_accents=True
@@ -230,9 +226,7 @@ class LinearFit:
             intercept_stderr=res.intercept_stderr,
         )
         self.df = self.df.with_columns(
-            (self.result.slope * pl.col(self.x_name) + self.result.intercept).alias(
-                "fitted"
-            )
+            (self.result.slope * pl.col(self.x_name) + self.result.intercept).alias("fitted")
         )
 
     @property
@@ -350,9 +344,7 @@ class DataSet:
         if not self._x_name or not self._y_name:
             return
         fit_df = self.df.slice(start_index, end_index - start_index + 1)
-        fit = LinearFit(
-            start_index, end_index, fit_df, self._x_name, self._y_name, self._y2_name
-        )
+        fit = LinearFit(start_index, end_index, fit_df, self._x_name, self._y_name, self._y2_name)
         self.fits.append(fit)
         self.fits.sort(key=lambda fit: fit.start_index)
 
