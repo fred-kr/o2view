@@ -1,6 +1,7 @@
-/* #table-results button.export {
-    display: none;
-} */
 input:invalid {
     outline: none !important;
+}
+
+.mantine-Group-root {
+    align-items: flex-start;
 }

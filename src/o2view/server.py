@@ -16,6 +16,7 @@ from dash import (
     clientside_callback,
     dash_table,
     dcc,
+    no_update,
 )
 from dash.dash_table.Format import Format, Scheme
 from dash.exceptions import PreventUpdate
@@ -173,7 +174,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                     ),
                     dmc.Group(
                         wrap="nowrap",
-                        align="stretch",
                         children=[
                             dmc.Stack(
                                 gap=5,
@@ -189,12 +189,11 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                         multiple=False,
                                         style=upload_style,
                                     ),
-                                    dmc.Text("Current: -", id="label-current-file"),
+                                    dmc.Text("File: -", id="label-current-file"),
                                 ],
                             ),
                             dmc.Group(
                                 wrap="nowrap",
-                                align="baseline",
                                 w="100%",
                                 children=[
                                     dmc.Select(
@@ -224,28 +223,54 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                         flex=1,
                                         grow=True,
                                         children=[
-                                            dmc.Button("Plot", id="btn-make-plot", color="indigo", variant="filled"),
-                                            dmc.Button("Add fit", id="btn-add-fit", color="indigo", variant="filled"),
+                                            dmc.Tooltip(
+                                                dmc.Button(
+                                                    "Plot",
+                                                    id="btn-make-plot",
+                                                    color="indigo",
+                                                    variant="filled",
+                                                    n_clicks=0,
+                                                    size="sm",
+                                                ),
+                                                label="Re-create plot (including fits) with the current setting values",
+                                                multiline=True,
+                                            ),
+                                            dmc.Tooltip(
+                                                dmc.Button(
+                                                    "Fit",
+                                                    id="btn-add-fit",
+                                                    color="indigo",
+                                                    variant="filled",
+                                                    n_clicks=0,
+                                                    size="sm",
+                                                ),
+                                                label="Fit a line to the selected data points",
+                                                multiline=True,
+                                            ),
                                         ],
                                     ),
                                     dmc.Group(
                                         wrap="nowrap",
                                         justify="flex-end",
-                                        flex=1,
+                                        # flex=1,
                                         children=[
                                             dmc.Tooltip(
                                                 dmc.Button(
-                                                    "Export Results",
+                                                    "Export",
                                                     id="btn-export-results",
                                                     color="indigo",
                                                     variant="light",
                                                     leftSection=DashIconify(icon="clarity:export-line"),
+                                                    n_clicks=0,
                                                 ),
-                                                label="Export results to Excel",
+                                                label="Save contents of results table to Excel file",
                                             ),
                                             dmc.ActionIcon(
                                                 id="btn-show-settings",
-                                                children=DashIconify(icon="clarity:settings-line", width=20),
+                                                children=DashIconify(
+                                                    icon="clarity:settings-line",
+                                                    width=20,
+                                                ),
                                                 size="input-sm",
                                                 color="indigo",
                                                 variant="light",
@@ -297,6 +322,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                         opened=False,
                         position="bottom",
                         keepMounted=True,
+                        withOverlay=False,
                         children=[
                             dmc.Tabs(
                                 [
@@ -322,6 +348,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                                     style_cell={"textAlign": "left"},
                                                     style_table={"overflowX": "auto"},
                                                     row_deletable=True,
+                                                    row_selectable="multi",
                                                 ),
                                                 dcc.Download(id="download-results"),
                                             ]
@@ -354,7 +381,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                     dcc.Store(id="store-dataset"),
                     dcc.Store(id="store-results"),
                     dcc.Store(id="store-graph"),
-                    dmc.Box(id="dummy-div", style={"display": "none"}),
                 ],
             )
         ],
@@ -389,10 +415,10 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     )
     def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";") -> tuple[str, str]:
         if not contents or not filename:
-            return "", "Current: -"
+            return "", "File: -"
 
         parsed = parse_contents(contents, filename, skip_rows, separator)
-        return parsed.write_json(), f"Current: {filename}"
+        return parsed.write_json(), f"File: {filename}"
 
     @callback(
         Output("table-dataset", "columns"),
@@ -429,7 +455,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         prevent_initial_call=True,
     )
     def update_graph(data: dict[str, Any]):
-        return data or {}
+        return data or no_update
 
     clientside_callback(
         ClientsideFunction(
@@ -603,6 +629,35 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         del patched_fig["data"][trace_index]
         return patched_fig
 
+    # @callback(
+    #     Output("store-graph", "data", allow_duplicate=True),
+    #     Output("btn-make-plot", "n_clicks"),
+    #     Input("table-results", "selected_rows"),
+    #     State("table-results", "data"),
+    #     State("graph", "figure"),
+    #     State("btn-make-plot", "n_clicks"),
+    #     prevent_initial_call=True,
+    # )
+    # def highlight_selected_results(
+    #     selected_rows: list[int], data: list[dict[str, Any]], fig: FigureDict, n_clicks: int
+    # ):
+    #     if not selected_rows:
+    #         # if no rows are selected, restore original plot by simulating click on the plot button
+    #         return no_update, n_clicks + 1
+
+    #     rows = [data[i] for i in selected_rows]
+    #     selected = pl.from_dicts(rows, schema=result_df_schema)
+
+    #     patched_fig = Patch()
+    #     for row in selected.iter_rows(named=True):
+    #         trace_index = find_trace_index(fig, row["source_file"], row["start_index"])
+    #         if trace_index == -1:
+    #             continue
+
+    #         patched_fig["data"][trace_index]["line"] = {"color": "red", "width": 5, "dash": "dash"}
+
+    #     return patched_fig, no_update
+
     @callback(
         Output("download-results", "data"),
         Input("btn-export-results", "n_clicks"),
@@ -611,7 +666,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     )
     def export_results(n_clicks: int, data: list[dict[str, Any]]) -> dict[str, Any]:
         df = pl.from_dicts(data, schema=result_df_schema)
-        return dcc.send_bytes(df.write_excel, "o2view_results.xlsx")
+        return dcc.express.send_bytes(df.write_excel, "o2view_results.xlsx")
 
     with server_is_started:
         server_is_started.notify()

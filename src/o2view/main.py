@@ -40,7 +40,7 @@ def start() -> None:
         height=min(1000, dh),
         min_size=min_size,
     )
-    webview.start()
+    webview.start(debug=True)
 
     # Reached only when the window is closed
     p.terminate()
