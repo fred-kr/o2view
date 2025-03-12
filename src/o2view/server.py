@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 upload_style = {
-    "width": "350px",
+    "width": "300px",
     "height": "60px",
     "lineHeight": "60px",
     "borderWidth": "1px",
