@@ -1,5 +1,10 @@
 import os
 import sys
+
+if not sys.warnoptions:
+    import warnings
+
+    warnings.simplefilter("ignore")
 import time
 from multiprocessing import Condition, Process
 
@@ -17,8 +22,10 @@ def start() -> None:
     server_is_started = Condition()
     setproctitle.setproctitle("o2view")
 
+    # Ensure the process doesn't show warnings
     p = Process(target=start_dash, args=(host, port, server_is_started))
     p.start()
+    
 
     terminate_when_process_dies(p)
 

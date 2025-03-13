@@ -77,7 +77,6 @@ def make_fit_trace(
         mode="lines",
         line=dict(color="darkorange", width=4),
         name=name,
-        
         hoverinfo="text",
         hovertext=f"start_index={start_index}<br>slope={slope:.4f}<br>r^2={rsquared**2:.3f}<br>y2_mean={y2_mean:.1f}",
         hoverlabel=dict(namelength=-1),

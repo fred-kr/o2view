@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-o2view = "o2view:main"
+o2view = "o2view.main:start"
 
 [tool.uv]
 prerelease = "allow"

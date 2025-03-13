@@ -42,9 +42,9 @@ upload_style = {
 
 
 result_table_columns: list = [
-    {"id": "source_file", "name": "source_file"},
-    {"id": "start_index", "name": "start_index"},
-    {"id": "end_index", "name": "end_index"},
+    {"id": "source_file", "name": "source_file", "type": "text"},
+    {"id": "start_index", "name": "start_index", "type": "numeric", "format": Format(scheme=Scheme.decimal_integer)},
+    {"id": "end_index", "name": "end_index", "type": "numeric", "format": Format(scheme=Scheme.decimal_integer)},
     {
         "id": "slope",
         "name": "slope",
@@ -108,18 +108,18 @@ dropdown_y_rangemode_data: list = [
 
 
 def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
+    import sys
+
+    if not sys.warnoptions:
+        import warnings
+
+        warnings.simplefilter("ignore", category=DeprecationWarning)
     setproctitle.setproctitle("o2view-dash")
 
     terminate_when_parent_process_dies()
     _dash_renderer._set_react_version("18.2.0")
     dmc.add_figure_templates(default="mantine_light")
-    app = Dash(
-        __name__,
-        external_stylesheets=dmc.styles.ALL.append(
-            "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
-        ),
-        prevent_initial_callbacks=True,
-    )
+    app = Dash(__name__, external_stylesheets=dmc.styles.ALL)
 
     app.layout = dmc.MantineProvider(
         children=[
@@ -128,6 +128,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                 mt=20,
                 mb=20,
                 children=[
+                    dcc.Download(id="download-results"),
                     dmc.Drawer(
                         id="drawer-settings",
                         title="Settings",
@@ -147,7 +148,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                         id="dropdown-separator",
                                         label="Column Separator",
                                         data=dropdown_separator_data,
-                                        value="auto",
+                                        value=";",
                                         w="100%",
                                     ),
                                 ],
@@ -171,7 +172,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     dmc.Switch(
                                         id="switch-show-legend",
                                         label="Show Legend",
-                                        checked=True,
+                                        checked=False,
                                         mt=10,
                                     ),
                                 ],
@@ -292,41 +293,125 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                         id="box-fig",
                         w="100%",
                         children=[
-                            dmc.AspectRatio(
-                                ratio=16 / 9,
+                            dmc.Grid(
+                                id="group-tables-graph",
+                                # wrap="nowrap",
                                 children=[
-                                    dcc.Loading(
-                                        [
-                                            dcc.Graph(
-                                                id="graph",
-                                                responsive=True,
-                                                animate=True,
-                                                config={
-                                                    "displayModeBar": True,
-                                                    "editSelection": False,
-                                                    "displaylogo": False,
-                                                    "scrollZoom": True,
-                                                    "modeBarButtonsToAdd": [
-                                                        "toggleHover",
+                                    dmc.GridCol(
+                                        span=3,
+                                        children=dmc.Collapse(
+                                            id="collapse-tables",
+                                            opened=False,
+                                            children=[
+                                                dmc.Container(
+                                                    size="md",
+                                                    children=[
+                                                        dmc.Tabs(
+                                                            keepMounted=True,
+                                                            children=[
+                                                                dmc.TabsList(
+                                                                    [
+                                                                        dmc.TabsTab("Results", value="results"),
+                                                                        dmc.TabsTab("Current Dataset", value="dataset"),
+                                                                    ]
+                                                                ),
+                                                                dmc.TabsPanel(
+                                                                    children=[
+                                                                        dash_table.DataTable(
+                                                                            id="table-results",
+                                                                            columns=result_table_columns,
+                                                                            hidden_columns=[
+                                                                                "x_name",
+                                                                                "x_first",
+                                                                                "x_last",
+                                                                                "y_name",
+                                                                                "y_first",
+                                                                                "y_last",
+                                                                                "y2_name",
+                                                                                "y2_first",
+                                                                                "y2_last",
+                                                                            ],
+                                                                            page_size=30,
+                                                                            style_table={"overflowX": "scroll"},
+                                                                            style_header={
+                                                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                                                "fontWeight": "bold",
+                                                                                "textAlign": "left",
+                                                                            },
+                                                                            # style_cell={
+                                                                            #     "textAlign": "left",
+                                                                            #     "textOverflow": "ellipsis",
+                                                                            #     "overflow": "hidden",
+                                                                            # },
+                                                                            row_deletable=True,
+                                                                        ),
+                                                                    ],
+                                                                    value="results",
+                                                                ),
+                                                                dmc.TabsPanel(
+                                                                    children=[
+                                                                        dash_table.DataTable(
+                                                                            id="table-dataset",
+                                                                            page_size=30,
+                                                                            style_header={
+                                                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                                                "fontWeight": "bold",
+                                                                                "textAlign": "left",
+                                                                            },
+                                                                            style_cell={"textAlign": "left"},
+                                                                            style_table={"overflowX": "scroll"},
+                                                                        ),
+                                                                    ],
+                                                                    value="dataset",
+                                                                ),
+                                                            ],
+                                                            value="results",
+                                                        )
                                                     ],
-                                                    "modeBarButtonsToRemove": [
-                                                        "sendDataToCloud",
-                                                        "zoom2d",
-                                                        "pan2d",
-                                                        "lasso2d",
-                                                        "zoomIn2d",
-                                                        "zoomOut2d",
+                                                )
+                                            ],
+                                        ),
+                                    ),
+                                    dmc.GridCol(
+                                        span="auto",
+                                        children=dmc.AspectRatio(
+                                            ratio=16 / 9,
+                                            flex=1,
+                                            children=[
+                                                dcc.Loading(
+                                                    [
+                                                        dcc.Graph(
+                                                            id="graph",
+                                                            responsive=True,
+                                                            config={
+                                                                "displayModeBar": True,
+                                                                "editSelection": False,
+                                                                "displaylogo": False,
+                                                                "scrollZoom": True,
+                                                                "modeBarButtonsToAdd": [
+                                                                    "toggleHover",
+                                                                ],
+                                                                "modeBarButtonsToRemove": [
+                                                                    "sendDataToCloud",
+                                                                    "zoom2d",
+                                                                    "pan2d",
+                                                                    "lasso2d",
+                                                                    "zoomIn2d",
+                                                                    "zoomOut2d",
+                                                                ],
+                                                                "doubleClick": "reset+autosize",
+                                                            },
+                                                            style={"height": "80vh"},
+                                                        )
                                                     ],
-                                                    "doubleClick": "reset+autosize",
-                                                },
-                                                style={"height": "85vh"},
-                                            )
-                                        ],
-                                        overlay_style={
-                                            "visibility": "visible",
-                                            "opacity": 0.5,
-                                            "backgroundColor": "white",
-                                        },
+                                                    overlay_style={
+                                                        "visibility": "visible",
+                                                        "opacity": 0.5,
+                                                        "backgroundColor": "white",
+                                                    },
+                                                ),
+                                            ],
+                                        ),
                                     ),
                                 ],
                             ),
@@ -335,86 +420,10 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     "Results & Dataset",
                                     id="btn-show-tables",
                                     color="indigo",
-                                    variant="light",
+                                    variant="filled",
                                     leftSection=DashIconify(icon="clarity:table-line", width=20),
                                 ),
                                 position={"bottom": 20, "left": 20},
-                            ),
-                            dmc.Drawer(
-                                id="drawer-tables",
-                                title="Results & Dataset",
-                                opened=False,
-                                position="left",
-                                keepMounted=True,
-                                closeOnClickOutside=True,
-                                closeOnEscape=True,
-                                bd="1px solid",
-                                withOverlay=False,
-                                children=[
-                                    dmc.Tabs(
-                                        [
-                                            dmc.TabsList(
-                                                [
-                                                    dmc.TabsTab("Results", value="results"),
-                                                    dmc.TabsTab("Current Dataset", value="dataset"),
-                                                ]
-                                            ),
-                                            dmc.TabsPanel(
-                                                dmc.Box(
-                                                    [
-                                                        dash_table.DataTable(
-                                                            id="table-results",
-                                                            columns=result_table_columns,
-                                                            hidden_columns=[
-                                                                "x_name",
-                                                                "x_first",
-                                                                "x_last",
-                                                                "y_name",
-                                                                "y_first",
-                                                                "y_last",
-                                                                "y2_name",
-                                                                "y2_first",
-                                                                "y2_last",
-                                                            ],
-                                                            data=[],
-                                                            page_size=15,
-                                                            style_header={
-                                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                                "fontWeight": "bold",
-                                                                "textAlign": "left",
-                                                            },
-                                                            style_cell={"textAlign": "left"},
-                                                            style_table={"overflowX": "auto"},
-                                                            row_deletable=True,
-                                                            row_selectable="multi",
-                                                        ),
-                                                        dcc.Download(id="download-results"),
-                                                    ]
-                                                ),
-                                                value="results",
-                                            ),
-                                            dmc.TabsPanel(
-                                                dmc.Box(
-                                                    [
-                                                        dash_table.DataTable(
-                                                            id="table-dataset",
-                                                            page_size=15,
-                                                            style_header={
-                                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                                "fontWeight": "bold",
-                                                                "textAlign": "left",
-                                                            },
-                                                            style_cell={"textAlign": "left"},
-                                                            style_table={"overflowX": "scroll"},
-                                                        ),
-                                                    ]
-                                                ),
-                                                value="dataset",
-                                            ),
-                                        ],
-                                        value="results",
-                                    )
-                                ],
                             ),
                         ],
                     ),
@@ -427,9 +436,10 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     )
 
     @callback(
-        Output("drawer-tables", "opened"),
+        Output("collapse-tables", "opened"),
         Input("btn-show-tables", "n_clicks"),
-        State("drawer-tables", "opened"),
+        State("collapse-tables", "opened"),
+        prevent_initial_call=True,
     )
     def toggle_tables(n_clicks: int, opened: bool) -> bool:
         return not opened
@@ -438,6 +448,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("drawer-settings", "opened"),
         Input("btn-show-settings", "n_clicks"),
         State("drawer-settings", "opened"),
+        prevent_initial_call=True,
     )
     def toggle_settings(n_clicks: int, opened: bool) -> bool:
         return not opened
@@ -445,17 +456,36 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     @callback(
         Output("store-dataset", "data"),
         Output("label-current-file", "children"),
+        Output("table-results", "style_data_conditional"),
         Input("upload-data", "contents"),
         State("upload-data", "filename"),
         State("input-skip-rows", "value"),
         State("dropdown-separator", "value"),
+        prevent_initial_call=True,
     )
-    def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";") -> tuple[str, str]:
+    def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";"):
         if not contents or not filename:
             return "", "File: -"
 
         parsed = parse_contents(contents, filename, skip_rows, separator)
-        return parsed.write_json(), f"File: {filename}"
+
+        result_format = [
+            {
+                "if": {
+                    "filter_query": "{{source_file}} = '{}'".format(filename),
+                },
+                "backgroundColor": "lightskyblue",
+                "opacity": 1,
+            },
+            {
+                "if": {
+                    "filter_query": "{{source_file}} != '{}'".format(filename),
+                },
+                "backgroundColor": "white",
+                "opacity": 0.5,
+            },
+        ]
+        return parsed.write_json(), f"File: {filename}", result_format
 
     @callback(
         Output("table-dataset", "columns"),
@@ -467,6 +497,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("dropdown-y-data", "value"),
         Output("dropdown-y2-data", "value"),
         Input("store-dataset", "data"),
+        prevent_initial_call=True,
     )
     def populate_controls(data: str):
         if not data:
@@ -474,6 +505,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
 
         parsed = pl.read_json(io.StringIO(data))
         cols = parsed.columns
+
         return (
             [{"name": col_name, "id": col_name} for col_name in cols],
             parsed.to_dicts(),
@@ -488,6 +520,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     @callback(
         Output("graph", "figure"),
         Input("store-graph", "data"),
+        prevent_initial_call=True,
     )
     def update_graph(data: dict[str, Any]):
         return data or no_update
@@ -499,6 +532,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         ),
         Output("btn-make-plot", "loading", allow_duplicate=True),
         Input("btn-make-plot", "n_clicks"),
+        prevent_initial_call=True,
     )
 
     @callback(
@@ -514,6 +548,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("switch-show-legend", "checked"),
         State("table-results", "data"),
         State("upload-data", "filename"),
+        prevent_initial_call=True,
     )
     def make_plot(
         n_clicks: int,
@@ -562,6 +597,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("dropdown-y2-data", "value"),
         State("upload-data", "filename"),
         State("table-results", "data"),
+        prevent_initial_call=True,
     )
     def add_fit(
         n_clicks: int,
@@ -638,6 +674,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Input("table-results", "data_previous"),
         State("table-results", "data"),
         State("graph", "figure"),
+        prevent_initial_call=True,
     )
     def remove_fit(
         data_previous: list[dict[str, Any]],
@@ -667,7 +704,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     #     State("table-results", "data"),
     #     State("graph", "figure"),
     #     State("btn-make-plot", "n_clicks"),
-    #
+    #     prevent_initial_call=True,
     # )
     # def highlight_selected_results(
     #     selected_rows: list[int], data: list[dict[str, Any]], fig: FigureDict, n_clicks: int
@@ -693,6 +730,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("download-results", "data"),
         Input("btn-export-results", "n_clicks"),
         State("table-results", "data"),
+        prevent_initial_call=True,
     )
     def export_results(n_clicks: int, data: list[dict[str, Any]]) -> dict[str, Any]:
         df = pl.from_dicts(data, schema=result_df_schema)
