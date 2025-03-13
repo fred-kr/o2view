@@ -113,7 +113,11 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     terminate_when_parent_process_dies()
     _dash_renderer._set_react_version("18.2.0")
     dmc.add_figure_templates()
-    app = Dash(__name__, external_stylesheets=dmc.styles.ALL)
+    app = Dash(
+        __name__,
+        external_stylesheets=dmc.styles.ALL
+        + ["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"],
+    )
 
     app.layout = dmc.MantineProvider(
         children=[
@@ -221,7 +225,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     dmc.Group(
                                         wrap="nowrap",
                                         flex=1,
-                                        grow=True,
+                                        # grow=True,
                                         children=[
                                             dmc.Tooltip(
                                                 dmc.Button(
@@ -289,11 +293,15 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 [
                                     dcc.Graph(
                                         id="graph",
+                                        responsive=True,
                                         config={
                                             "editSelection": False,
                                             "displaylogo": False,
-                                            "scrollZoom": False,
-                                            "doubleClick": "reset",
+                                            "scrollZoom": True,
+                                            "showEditInChartStudio": True,
+                                            "doubleClick": "reset+autosize",
+                                            "showAxisDragHandles": True,
+                                            "showAxisRangeEntryBoxes": True,
                                         },
                                         style={"height": "85vh"},
                                     )
@@ -314,68 +322,69 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 ),
                                 position={"bottom": 20, "left": 20},
                             ),
-                        ],
-                    ),
-                    dmc.Drawer(
-                        id="drawer-tables",
-                        title="Results & Dataset",
-                        opened=False,
-                        position="bottom",
-                        keepMounted=True,
-                        withOverlay=False,
-                        children=[
-                            dmc.Tabs(
-                                [
-                                    dmc.TabsList(
+                            dmc.Drawer(
+                                id="drawer-tables",
+                                title="Results & Dataset",
+                                opened=False,
+                                position="bottom",
+                                keepMounted=True,
+                                closeOnClickOutside=True,
+                                closeOnEscape=True,
+                                children=[
+                                    dmc.Tabs(
                                         [
-                                            dmc.TabsTab("Results", value="results"),
-                                            dmc.TabsTab("Current Dataset", value="dataset"),
-                                        ]
-                                    ),
-                                    dmc.TabsPanel(
-                                        dmc.Box(
-                                            [
-                                                dash_table.DataTable(
-                                                    id="table-results",
-                                                    columns=result_table_columns,
-                                                    data=[],
-                                                    page_size=15,
-                                                    style_header={
-                                                        "backgroundColor": "rgb(230, 230, 230)",
-                                                        "fontWeight": "bold",
-                                                        "textAlign": "left",
-                                                    },
-                                                    style_cell={"textAlign": "left"},
-                                                    style_table={"overflowX": "auto"},
-                                                    row_deletable=True,
-                                                    row_selectable="multi",
+                                            dmc.TabsList(
+                                                [
+                                                    dmc.TabsTab("Results", value="results"),
+                                                    dmc.TabsTab("Current Dataset", value="dataset"),
+                                                ]
+                                            ),
+                                            dmc.TabsPanel(
+                                                dmc.Box(
+                                                    [
+                                                        dash_table.DataTable(
+                                                            id="table-results",
+                                                            columns=result_table_columns,
+                                                            data=[],
+                                                            page_size=15,
+                                                            style_header={
+                                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                                "fontWeight": "bold",
+                                                                "textAlign": "left",
+                                                            },
+                                                            style_cell={"textAlign": "left"},
+                                                            style_table={"overflowX": "auto"},
+                                                            row_deletable=True,
+                                                            row_selectable="multi",
+                                                        ),
+                                                        dcc.Download(id="download-results"),
+                                                    ]
                                                 ),
-                                                dcc.Download(id="download-results"),
-                                            ]
-                                        ),
+                                                value="results",
+                                            ),
+                                            dmc.TabsPanel(
+                                                dmc.Box(
+                                                    [
+                                                        dash_table.DataTable(
+                                                            id="table-dataset",
+                                                            page_size=15,
+                                                            style_header={
+                                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                                "fontWeight": "bold",
+                                                                "textAlign": "left",
+                                                            },
+                                                            style_cell={"textAlign": "left"},
+                                                            style_table={"overflowX": "scroll"},
+                                                        ),
+                                                    ]
+                                                ),
+                                                value="dataset",
+                                            ),
+                                        ],
                                         value="results",
-                                    ),
-                                    dmc.TabsPanel(
-                                        dmc.Box(
-                                            [
-                                                dash_table.DataTable(
-                                                    id="table-dataset",
-                                                    page_size=15,
-                                                    style_header={
-                                                        "backgroundColor": "rgb(230, 230, 230)",
-                                                        "fontWeight": "bold",
-                                                        "textAlign": "left",
-                                                    },
-                                                    style_cell={"textAlign": "left"},
-                                                    style_table={"overflowX": "scroll"},
-                                                ),
-                                            ]
-                                        ),
-                                        value="dataset",
-                                    ),
+                                    )
                                 ],
-                                value="results",
-                            )
+                            ),
                         ],
                     ),
                     dcc.Store(id="store-dataset"),
@@ -671,4 +680,4 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     with server_is_started:
         server_is_started.notify()
 
-    app.run(debug=False, host=host, port=port)
+    app.run(debug=True, use_reloader=False, host=host, port=port)

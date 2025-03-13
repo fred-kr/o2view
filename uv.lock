@@ -132,15 +132,25 @@ wheels = [
 
 [[package]]
 name = "dash-mantine-components"
-version = "1.0.0rc2"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/09/6f/f166eb5eefca27f44d69e88300a189530025197805aa29502dfd998e73a1/dash_mantine_components-1.0.0rc2.tar.gz", hash = "sha256:6d07dc3f127bc3a1f52b238b089481c71b28191cc323c21ce78f0a52c96f8b42", size = 1013123 }
+sdist = { url = "https://files.pythonhosted.org/packages/df/cc/be521da3df2c240fded8eca8cea21e9cd183a2eed33272177d7754a32908/dash_mantine_components-1.0.0.tar.gz", hash = "sha256:b0e381f65bde63b43d2fa9da37279431fc9a6c0d0713aa0232c7c7e00a8ea088", size = 1446610 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/b4/3ae833c89bcfdb147edf71ee0ac18c4f605a3b7a8bba9e07c7b1e324d487/dash_mantine_components-1.0.0rc2-py3-none-any.whl", hash = "sha256:82be5de00e42b2c2fa1b15872d102e10b87a7c868167439cf31b4d55e9dc8745", size = 1356381 },
+    { url = "https://files.pythonhosted.org/packages/bb/26/9d1c19fe8b58ed2cd206e800f22352713f50f8eb239b1c418e39494cf520/dash_mantine_components-1.0.0-py3-none-any.whl", hash = "sha256:e5c1fb32db24ece57727275723e9642a6e5dd616a09f22a569f4bc1618a826c4", size = 1794022 },
 ]
+
+[[package]]
+name = "dash-uploader"
+version = "0.7.0a2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dash" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a4/92/cc10b2e1c9b214dcce90436464b4c209031e9ef0a2a37e7c32500cededc2/dash_uploader-0.7.0a2.tar.gz", hash = "sha256:9842578cb4ded0c414ae5a9aa5961a9a32ceef217a57df95712a87490c28b76e", size = 81701 }
 
 [[package]]
 name = "et-xmlfile"
@@ -264,11 +274,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "1.29.1"
+version = "1.30.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a7/17/7d35094da0820ae941d8ce51842f253da36c6f95360ea0afabfc18bc02c6/narwhals-1.29.1.tar.gz", hash = "sha256:c408acf09e90c116f247cf34f24a3a89d147e3e235b1d3c708cfd1960baf320a", size = 251464 }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/98/be6d35e8869ab9403fa25dc3458e7af6ce36dac2873c74c7274a59b21958/narwhals-1.30.0.tar.gz", hash = "sha256:0c50cc67a5404da501302882838ec17dce51703d22cd8ad89162d6f60ea0bb19", size = 253461 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f1/22/380df533b08a57bc9013bb5714f33c571e1447828d83213a66adaefc0a04/narwhals-1.29.1-py3-none-any.whl", hash = "sha256:2f68cfbb2562672c4dfa54f158ed8c2828e9920ef784981cd9114e419c444216", size = 308220 },
+    { url = "https://files.pythonhosted.org/packages/e4/97/bde1e4cf1e0fe0d4c70f750b57d152c0ecb04bb35de7aa7950a5756a71d6/narwhals-1.30.0-py3-none-any.whl", hash = "sha256:443aa0a1abfae89bc65a6b888a7e310a03d1818bfb2ccd61c150199a5f954c17", size = 313611 },
 ]
 
 [[package]]
@@ -325,6 +335,7 @@ dependencies = [
     { name = "dash" },
     { name = "dash-iconify" },
     { name = "dash-mantine-components" },
+    { name = "dash-uploader" },
     { name = "numpy" },
     { name = "plotly" },
     { name = "polars", extra = ["excel"] },
@@ -336,9 +347,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dash", specifier = ">=2.18.2" },
+    { name = "dash", specifier = ">=3.0.0rc4" },
     { name = "dash-iconify", specifier = ">=0.1.2" },
-    { name = "dash-mantine-components", specifier = ">=0.15.3" },
+    { name = "dash-mantine-components", specifier = ">=1.0.0" },
+    { name = "dash-uploader", specifier = ">=0.7.0a2" },
     { name = "numpy", specifier = ">=2.2.3" },
     { name = "plotly", specifier = ">=6.0.0" },
     { name = "polars", extras = ["excel"], specifier = ">=1.24.0" },
@@ -707,11 +719,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "75.8.2"
+version = "76.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d1/53/43d99d7687e8cdef5ab5f9ec5eaf2c0423c2b35133a2b7e7bc276fc32b21/setuptools-75.8.2.tar.gz", hash = "sha256:4880473a969e5f23f2a2be3646b2dfd84af9028716d398e46192f84bc36900d2", size = 1344083 }
+sdist = { url = "https://files.pythonhosted.org/packages/32/d2/7b171caf085ba0d40d8391f54e1c75a1cda9255f542becf84575cfd8a732/setuptools-76.0.0.tar.gz", hash = "sha256:43b4ee60e10b0d0ee98ad11918e114c70701bc6051662a9a675a0496c1a158f4", size = 1349387 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/38/7d7362e031bd6dc121e5081d8cb6aa6f6fedf2b67bf889962134c6da4705/setuptools-75.8.2-py3-none-any.whl", hash = "sha256:558e47c15f1811c1fa7adbd0096669bf76c1d3f433f58324df69f3f5ecac4e8f", size = 1229385 },
+    { url = "https://files.pythonhosted.org/packages/37/66/d2d7e6ad554f3a7c7297c3f8ef6e22643ad3d35ef5c63bf488bc89f32f31/setuptools-76.0.0-py3-none-any.whl", hash = "sha256:199466a166ff664970d0ee145839f5582cb9bca7a0a3a2e795b6a9cb2308e9c6", size = 1236106 },
 ]
 
 [[package]]

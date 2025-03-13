@@ -47,7 +47,7 @@ def plot_dataset(
         template=theme,
         dragmode="select",
         selectdirection="h",
-        autosize=True,
+        # autosize=True,
         showlegend=show_legend,
     )
     return fig
