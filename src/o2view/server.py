@@ -112,11 +112,13 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
 
     terminate_when_parent_process_dies()
     _dash_renderer._set_react_version("18.2.0")
-    dmc.add_figure_templates()
+    dmc.add_figure_templates(default="mantine_light")
     app = Dash(
         __name__,
-        external_stylesheets=dmc.styles.ALL
-        + ["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"],
+        external_stylesheets=dmc.styles.ALL.append(
+            "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+        ),
+        prevent_initial_callbacks=True,
     )
 
     app.layout = dmc.MantineProvider(
@@ -233,6 +235,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                                     id="btn-make-plot",
                                                     color="indigo",
                                                     variant="filled",
+                                                    justify="space-around",
                                                     n_clicks=0,
                                                     size="sm",
                                                 ),
@@ -241,10 +244,11 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                             ),
                                             dmc.Tooltip(
                                                 dmc.Button(
-                                                    "Fit",
+                                                    "Add Fit",
                                                     id="btn-add-fit",
                                                     color="indigo",
                                                     variant="filled",
+                                                    justify="space-around",
                                                     n_clicks=0,
                                                     size="sm",
                                                 ),
@@ -256,7 +260,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     dmc.Group(
                                         wrap="nowrap",
                                         justify="flex-end",
-                                        # flex=1,
                                         children=[
                                             dmc.Tooltip(
                                                 dmc.Button(
@@ -289,28 +292,43 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                         id="box-fig",
                         w="100%",
                         children=[
-                            dcc.Loading(
-                                [
-                                    dcc.Graph(
-                                        id="graph",
-                                        responsive=True,
-                                        config={
-                                            "editSelection": False,
-                                            "displaylogo": False,
-                                            "scrollZoom": True,
-                                            "showEditInChartStudio": True,
-                                            "doubleClick": "reset+autosize",
-                                            "showAxisDragHandles": True,
-                                            "showAxisRangeEntryBoxes": True,
+                            dmc.AspectRatio(
+                                ratio=16 / 9,
+                                children=[
+                                    dcc.Loading(
+                                        [
+                                            dcc.Graph(
+                                                id="graph",
+                                                responsive=True,
+                                                animate=True,
+                                                config={
+                                                    "displayModeBar": True,
+                                                    "editSelection": False,
+                                                    "displaylogo": False,
+                                                    "scrollZoom": True,
+                                                    "modeBarButtonsToAdd": [
+                                                        "toggleHover",
+                                                    ],
+                                                    "modeBarButtonsToRemove": [
+                                                        "sendDataToCloud",
+                                                        "zoom2d",
+                                                        "pan2d",
+                                                        "lasso2d",
+                                                        "zoomIn2d",
+                                                        "zoomOut2d",
+                                                    ],
+                                                    "doubleClick": "reset+autosize",
+                                                },
+                                                style={"height": "85vh"},
+                                            )
+                                        ],
+                                        overlay_style={
+                                            "visibility": "visible",
+                                            "opacity": 0.5,
+                                            "backgroundColor": "white",
                                         },
-                                        style={"height": "85vh"},
-                                    )
+                                    ),
                                 ],
-                                overlay_style={
-                                    "visibility": "visible",
-                                    "opacity": 0.5,
-                                    "backgroundColor": "white",
-                                },
                             ),
                             dmc.Affix(
                                 dmc.Button(
@@ -326,10 +344,12 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 id="drawer-tables",
                                 title="Results & Dataset",
                                 opened=False,
-                                position="bottom",
+                                position="left",
                                 keepMounted=True,
                                 closeOnClickOutside=True,
                                 closeOnEscape=True,
+                                bd="1px solid",
+                                withOverlay=False,
                                 children=[
                                     dmc.Tabs(
                                         [
@@ -345,6 +365,17 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                                         dash_table.DataTable(
                                                             id="table-results",
                                                             columns=result_table_columns,
+                                                            hidden_columns=[
+                                                                "x_name",
+                                                                "x_first",
+                                                                "x_last",
+                                                                "y_name",
+                                                                "y_first",
+                                                                "y_last",
+                                                                "y2_name",
+                                                                "y2_first",
+                                                                "y2_last",
+                                                            ],
                                                             data=[],
                                                             page_size=15,
                                                             style_header={
@@ -399,7 +430,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("drawer-tables", "opened"),
         Input("btn-show-tables", "n_clicks"),
         State("drawer-tables", "opened"),
-        prevent_initial_call=True,
     )
     def toggle_tables(n_clicks: int, opened: bool) -> bool:
         return not opened
@@ -408,7 +438,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("drawer-settings", "opened"),
         Input("btn-show-settings", "n_clicks"),
         State("drawer-settings", "opened"),
-        prevent_initial_call=True,
     )
     def toggle_settings(n_clicks: int, opened: bool) -> bool:
         return not opened
@@ -420,7 +449,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("upload-data", "filename"),
         State("input-skip-rows", "value"),
         State("dropdown-separator", "value"),
-        prevent_initial_call=True,
     )
     def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";") -> tuple[str, str]:
         if not contents or not filename:
@@ -439,7 +467,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("dropdown-y-data", "value"),
         Output("dropdown-y2-data", "value"),
         Input("store-dataset", "data"),
-        prevent_initial_call=True,
     )
     def populate_controls(data: str):
         if not data:
@@ -461,7 +488,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     @callback(
         Output("graph", "figure"),
         Input("store-graph", "data"),
-        prevent_initial_call=True,
     )
     def update_graph(data: dict[str, Any]):
         return data or no_update
@@ -473,7 +499,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         ),
         Output("btn-make-plot", "loading", allow_duplicate=True),
         Input("btn-make-plot", "n_clicks"),
-        prevent_initial_call=True,
     )
 
     @callback(
@@ -489,7 +514,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("switch-show-legend", "checked"),
         State("table-results", "data"),
         State("upload-data", "filename"),
-        prevent_initial_call=True,
     )
     def make_plot(
         n_clicks: int,
@@ -538,7 +562,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("dropdown-y2-data", "value"),
         State("upload-data", "filename"),
         State("table-results", "data"),
-        prevent_initial_call=True,
     )
     def add_fit(
         n_clicks: int,
@@ -615,7 +638,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Input("table-results", "data_previous"),
         State("table-results", "data"),
         State("graph", "figure"),
-        prevent_initial_call=True,
     )
     def remove_fit(
         data_previous: list[dict[str, Any]],
@@ -645,7 +667,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     #     State("table-results", "data"),
     #     State("graph", "figure"),
     #     State("btn-make-plot", "n_clicks"),
-    #     prevent_initial_call=True,
+    #
     # )
     # def highlight_selected_results(
     #     selected_rows: list[int], data: list[dict[str, Any]], fig: FigureDict, n_clicks: int
@@ -671,7 +693,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         Output("download-results", "data"),
         Input("btn-export-results", "n_clicks"),
         State("table-results", "data"),
-        prevent_initial_call=True,
     )
     def export_results(n_clicks: int, data: list[dict[str, Any]]) -> dict[str, Any]:
         df = pl.from_dicts(data, schema=result_df_schema)

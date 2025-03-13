@@ -1,3 +1,7 @@
+#table-results button.show-hide {
+    display: none;
+}
+
 input:invalid {
     outline: none !important;
 }

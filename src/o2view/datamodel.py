@@ -268,3 +268,11 @@ class LinearFit:
                 "y2_last": self.y2_last,
             }
         )
+
+
+class GlobalState:
+    def __init__(self) -> None:
+        self.source_file = ""
+        self.dataset = pl.DataFrame()
+        
+    
