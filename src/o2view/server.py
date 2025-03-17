@@ -42,9 +42,6 @@ upload_style = {
 
 
 result_table_columns: list = [
-    {"id": "source_file", "name": "source_file", "type": "text"},
-    {"id": "start_index", "name": "start_index", "type": "numeric", "format": Format(scheme=Scheme.decimal_integer)},
-    {"id": "end_index", "name": "end_index", "type": "numeric", "format": Format(scheme=Scheme.decimal_integer)},
     {
         "id": "slope",
         "name": "slope",
@@ -63,6 +60,9 @@ result_table_columns: list = [
         "type": "numeric",
         "format": Format(precision=1, scheme=Scheme.fixed),
     },
+    {"id": "start_index", "name": "start_index", "type": "numeric", "format": Format(scheme=Scheme.decimal_integer)},
+    {"id": "end_index", "name": "end_index", "type": "numeric", "format": Format(scheme=Scheme.decimal_integer)},
+    {"id": "source_file", "name": "source_file", "type": "text"},
     {"id": "x_name", "name": "x_name"},
     {"id": "x_first", "name": "x_first"},
     {"id": "x_last", "name": "x_last"},
@@ -228,7 +228,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     dmc.Group(
                                         wrap="nowrap",
                                         flex=1,
-                                        # grow=True,
                                         children=[
                                             dmc.Tooltip(
                                                 dmc.Button(
@@ -289,143 +288,131 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                             ),
                         ],
                     ),
-                    dmc.Box(
-                        id="box-fig",
-                        w="100%",
+                    dmc.Grid(
+                        id="group-tables-graph",
                         children=[
-                            dmc.Grid(
-                                id="group-tables-graph",
-                                # wrap="nowrap",
-                                children=[
-                                    dmc.GridCol(
-                                        span=3,
-                                        children=dmc.Collapse(
-                                            id="collapse-tables",
-                                            opened=False,
+                            dmc.GridCol(
+                                span="content",
+                                children=dmc.Collapse(
+                                    id="collapse-tables",
+                                    opened=False,
+                                    children=[
+                                        dmc.Tabs(
+                                            keepMounted=True,
                                             children=[
-                                                dmc.Container(
-                                                    size="md",
-                                                    children=[
-                                                        dmc.Tabs(
-                                                            keepMounted=True,
-                                                            children=[
-                                                                dmc.TabsList(
-                                                                    [
-                                                                        dmc.TabsTab("Results", value="results"),
-                                                                        dmc.TabsTab("Current Dataset", value="dataset"),
-                                                                    ]
-                                                                ),
-                                                                dmc.TabsPanel(
-                                                                    children=[
-                                                                        dash_table.DataTable(
-                                                                            id="table-results",
-                                                                            columns=result_table_columns,
-                                                                            hidden_columns=[
-                                                                                "x_name",
-                                                                                "x_first",
-                                                                                "x_last",
-                                                                                "y_name",
-                                                                                "y_first",
-                                                                                "y_last",
-                                                                                "y2_name",
-                                                                                "y2_first",
-                                                                                "y2_last",
-                                                                            ],
-                                                                            page_size=30,
-                                                                            style_table={"overflowX": "scroll"},
-                                                                            style_header={
-                                                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                                                "fontWeight": "bold",
-                                                                                "textAlign": "left",
-                                                                            },
-                                                                            # style_cell={
-                                                                            #     "textAlign": "left",
-                                                                            #     "textOverflow": "ellipsis",
-                                                                            #     "overflow": "hidden",
-                                                                            # },
-                                                                            row_deletable=True,
-                                                                        ),
-                                                                    ],
-                                                                    value="results",
-                                                                ),
-                                                                dmc.TabsPanel(
-                                                                    children=[
-                                                                        dash_table.DataTable(
-                                                                            id="table-dataset",
-                                                                            page_size=30,
-                                                                            style_header={
-                                                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                                                "fontWeight": "bold",
-                                                                                "textAlign": "left",
-                                                                            },
-                                                                            style_cell={"textAlign": "left"},
-                                                                            style_table={"overflowX": "scroll"},
-                                                                        ),
-                                                                    ],
-                                                                    value="dataset",
-                                                                ),
-                                                            ],
-                                                            value="results",
-                                                        )
-                                                    ],
-                                                )
-                                            ],
-                                        ),
-                                    ),
-                                    dmc.GridCol(
-                                        span="auto",
-                                        children=dmc.AspectRatio(
-                                            ratio=16 / 9,
-                                            flex=1,
-                                            children=[
-                                                dcc.Loading(
+                                                dmc.TabsList(
                                                     [
-                                                        dcc.Graph(
-                                                            id="graph",
-                                                            responsive=True,
-                                                            config={
-                                                                "displayModeBar": True,
-                                                                "editSelection": False,
-                                                                "displaylogo": False,
-                                                                "scrollZoom": True,
-                                                                "modeBarButtonsToAdd": [
-                                                                    "toggleHover",
-                                                                ],
-                                                                "modeBarButtonsToRemove": [
-                                                                    "sendDataToCloud",
-                                                                    "zoom2d",
-                                                                    "pan2d",
-                                                                    "lasso2d",
-                                                                    "zoomIn2d",
-                                                                    "zoomOut2d",
-                                                                ],
-                                                                "doubleClick": "reset+autosize",
+                                                        dmc.TabsTab("Results", value="results"),
+                                                        dmc.TabsTab("Current Dataset", value="dataset"),
+                                                    ]
+                                                ),
+                                                dmc.TabsPanel(
+                                                    children=[
+                                                        dash_table.DataTable(
+                                                            id="table-results",
+                                                            columns=result_table_columns,
+                                                            hidden_columns=[
+                                                                "x_name",
+                                                                "x_first",
+                                                                "x_last",
+                                                                "y_name",
+                                                                "y_first",
+                                                                "y_last",
+                                                                "y2_name",
+                                                                "y2_first",
+                                                                "y2_last",
+                                                            ],
+                                                            page_size=30,
+                                                            style_table={"overflowX": "scroll", "width": "30vw"},
+                                                            style_header={
+                                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                                "fontWeight": "bold",
+                                                                "textAlign": "left",
                                                             },
-                                                            style={"height": "80vh"},
-                                                        )
+                                                            row_deletable=True,
+                                                        ),
                                                     ],
-                                                    overlay_style={
-                                                        "visibility": "visible",
-                                                        "opacity": 0.5,
-                                                        "backgroundColor": "white",
-                                                    },
+                                                    value="results",
+                                                ),
+                                                dmc.TabsPanel(
+                                                    children=[
+                                                        dash_table.DataTable(
+                                                            id="table-dataset",
+                                                            page_size=30,
+                                                            style_header={
+                                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                                "fontWeight": "bold",
+                                                                "textAlign": "left",
+                                                            },
+                                                            style_cell={"textAlign": "left"},
+                                                            style_table={"overflowX": "scroll", "width": "30vw"},
+                                                        ),
+                                                    ],
+                                                    value="dataset",
                                                 ),
                                             ],
-                                        ),
-                                    ),
-                                ],
-                            ),
-                            dmc.Affix(
-                                dmc.Button(
-                                    "Results & Dataset",
-                                    id="btn-show-tables",
-                                    color="indigo",
-                                    variant="filled",
-                                    leftSection=DashIconify(icon="clarity:table-line", width=20),
+                                            value="results",
+                                        )
+                                        # dmc.Container(
+                                        #     # size="md",
+                                        #     children=[
+                                        #     ],
+                                        # )
+                                    ],
                                 ),
-                                position={"bottom": 20, "left": 20},
+                            ),
+                            dmc.GridCol(
+                                span="auto",
+                                children=dmc.AspectRatio(
+                                    ratio=16 / 9,
+                                    flex=1,
+                                    children=[
+                                        dcc.Loading(
+                                            [
+                                                dcc.Graph(
+                                                    id="graph",
+                                                    responsive=True,
+                                                    config={
+                                                        "displayModeBar": True,
+                                                        "editSelection": False,
+                                                        "displaylogo": False,
+                                                        "scrollZoom": True,
+                                                        "modeBarButtonsToAdd": [
+                                                            "toggleHover",
+                                                        ],
+                                                        "modeBarButtonsToRemove": [
+                                                            "sendDataToCloud",
+                                                            "zoom2d",
+                                                            "pan2d",
+                                                            "lasso2d",
+                                                            "zoomIn2d",
+                                                            "zoomOut2d",
+                                                        ],
+                                                        "doubleClick": "reset+autosize",
+                                                    },
+                                                    style={"height": "80vh"},
+                                                )
+                                            ],
+                                            overlay_style={
+                                                "visibility": "visible",
+                                                "opacity": 0.5,
+                                                "backgroundColor": "white",
+                                            },
+                                        ),
+                                    ],
+                                ),
                             ),
                         ],
+                    ),
+                    dmc.Affix(
+                        dmc.Button(
+                            "Results & Dataset",
+                            id="btn-show-tables",
+                            color="indigo",
+                            variant="filled",
+                            leftSection=DashIconify(icon="clarity:table-line", width=20),
+                        ),
+                        position={"bottom": 20, "left": 20},
                     ),
                     dcc.Store(id="store-dataset"),
                     dcc.Store(id="store-results"),
@@ -474,7 +461,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                 "if": {
                     "filter_query": "{{source_file}} = '{}'".format(filename),
                 },
-                "backgroundColor": "lightskyblue",
+                "backgroundColor": "lightgreen",
                 "opacity": 1,
             },
             {
@@ -739,4 +726,4 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     with server_is_started:
         server_is_started.notify()
 
-    app.run(debug=True, use_reloader=False, host=host, port=port)
+    app.run(debug=False, use_reloader=False, host=host, port=port)

@@ -11,10 +11,9 @@ dependencies = [
     "dash>=3.0.0rc4",
     "dash-iconify>=0.1.2",
     "dash-mantine-components>=1.0.0",
-    "dash-uploader>=0.7.0a2",
-    "numpy>=2.2.3",
+    "numpy>=2.2.4",
     "plotly>=6.0.0",
-    "polars[excel]>=1.24.0",
+    "polars[excel]>=1.25.2",
     "pyjanitor>=0.31.0",
     "pywebview>=5.4",
     "scipy>=1.15.2",
@@ -30,6 +29,3 @@ prerelease = "allow"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = []
