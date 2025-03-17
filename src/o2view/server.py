@@ -353,11 +353,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                             ],
                                             value="results",
                                         )
-                                        # dmc.Container(
-                                        #     # size="md",
-                                        #     children=[
-                                        #     ],
-                                        # )
                                     ],
                                 ),
                             ),
