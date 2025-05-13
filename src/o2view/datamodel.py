@@ -1,5 +1,7 @@
 import base64
 import csv
+import datetime
+import decimal
 import enum
 import io
 from dataclasses import dataclass, field
@@ -11,6 +13,8 @@ import polars.selectors as cs
 from scipy import stats
 
 import janitor.polars  # noqa: F401 # isort:skip
+
+D = decimal.Decimal
 
 
 def _simulate_contents(path: str) -> str:
@@ -274,5 +278,65 @@ class GlobalState:
     def __init__(self) -> None:
         self.source_file = ""
         self.dataset = pl.DataFrame()
-        
-    
+
+
+@dataclass(slots=True)
+class Record:
+    name: str
+    data: pl.DataFrame
+    source_file: str
+    sampling_rate: decimal.Decimal
+    fertilization_time: datetime.datetime
+    start_time: datetime.datetime
+    stop_time: datetime.datetime
+    record_type: str  # eggs, bacteria
+    identifier: str  # F01, F02, ...
+    temperature_group: str  # 0C, 4C
+    atmospheric_pressure: decimal.Decimal  # millibar
+    n_eggs: decimal.Decimal
+    n_eggs_weighed: decimal.Decimal
+    fresh_weight_measured: decimal.Decimal  # grams
+    fresh_weight_adjusted: decimal.Decimal  # grams
+    bacteria_group: str  # replace with enum
+    volume_respiration_chamber: decimal.Decimal  # ml
+    analysis_start_time: datetime.datetime  # start fit at this time
+    analysis_stop_time: datetime.datetime  # stop fit at this time
+    comment: str
+
+    ### column accessors =====
+    @property
+    def col_time_seconds(self) -> pl.Series:
+        return self.data.get_column("time_seconds")
+
+    @property
+    def col_logtime_min(self) -> pl.Series:
+        return self.data.get_column("logtime_min")
+
+    @property
+    def col_oxygen(self) -> pl.Series:
+        return self.data.get_column("oxygen")
+
+    @property
+    def col_temperature(self) -> pl.Series:
+        return self.data.get_column("temperature")
+
+    @property
+    def col_datetime_presens(self) -> pl.Series:
+        return self.data.get_column("datetime_presens")
+
+    @property
+    def col_datetime_local(self) -> pl.Series:
+        return self.data.get_column("datetime_local")
+
+    ### computed properties =====
+    @property
+    def duration(self) -> datetime.timedelta:
+        return self.stop_time - self.start_time
+
+    @property
+    def analysis_duration(self) -> datetime.timedelta:
+        return self.analysis_stop_time - self.analysis_start_time
+
+    @property
+    def analysis_duration_seconds(self) -> decimal.Decimal:
+        return D(self.analysis_duration.total_seconds())

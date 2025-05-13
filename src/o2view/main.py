@@ -25,7 +25,6 @@ def start() -> None:
     # Ensure the process doesn't show warnings
     p = Process(target=start_dash, args=(host, port, server_is_started))
     p.start()
-    
 
     terminate_when_process_dies(p)
 
