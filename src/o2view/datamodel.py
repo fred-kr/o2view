@@ -6,7 +6,7 @@ import enum
 import io
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Annotated, Any, NamedTuple, NotRequired, TypedDict
+from typing import Annotated, Any, Literal, NamedTuple, NotRequired, TypedDict
 
 import plotly.graph_objects as go
 import polars as pl
@@ -45,9 +45,11 @@ class GlobalState:
             raise RuntimeError("GlobalState is a singleton class")
         GlobalState._instance = self
 
-        self.source_data: pl.DataFrame = pl.read_ipc("src/o2view/data/source_cleaned_combined.arrow")
-        self.eggs_metadata: pl.DataFrame = pl.read_ipc("src/o2view/data/eggs_metadata_with_fits.arrow")
-        self.bacteria_metadata: pl.DataFrame = pl.read_ipc("src/o2view/data/bacteria_metadata_with_fits.arrow")
+        self.source_data = pl.read_ipc("src/o2view/data/source_cleaned_combined.arrow")
+        self.eggs_metadata = pl.read_ipc("src/o2view/data/eggs_metadata_with_fits.arrow")
+        self.bacteria_metadata = pl.read_ipc("src/o2view/data/bacteria_metadata_with_fits.arrow")
+        # DF that contains the source files that have been marked for review, to be exported after looking through the files
+        self.marked_files = pl.read_ipc("src/o2view/data/fit_markers.arrow", memory_map=False)
 
     def unique_files(self) -> list[str]:
         """Get a list of unique source files from the source data."""
@@ -86,6 +88,18 @@ class GlobalState:
             line=dict(color="darkorange", width=4),
         )
         return fig
+
+    def mark_file(self, source_file_cleaned: str, status: Literal["ok", "bad", "tbd"]) -> None:
+        """Mark a file as good or bad."""
+        temp_df = pl.DataFrame({"source_file_cleaned": [source_file_cleaned], "status": [status]})
+
+        self.marked_files = self.marked_files.update(temp_df, on="source_file_cleaned", how="left")
+        self.marked_files.write_ipc("src/o2view/data/fit_markers.arrow")
+        self.marked_files = pl.read_ipc("src/o2view/data/fit_markers.arrow", memory_map=False)
+
+    def get_marked_status(self, source_file_cleaned: str) -> str:
+        """Get the marked status of a file."""
+        return self.marked_files.filter(pl.col("source_file_cleaned") == source_file_cleaned).item(0, "status")
 
 
 class PlotlyTemplate(enum.StrEnum):

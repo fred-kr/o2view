@@ -1,29 +1,23 @@
-import io
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import dash_mantine_components as dmc
 import polars as pl
 import setproctitle
 from dash import (
-    ClientsideFunction,
     Dash,
     Input,
     Output,
-    State,
     _dash_renderer,
     callback,
-    clientside_callback,
-    dash_table,
+    ctx,
     dcc,
     no_update,
 )
 from dash.dash_table.Format import Format, Scheme
-from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 
-from o2view.datamodel import GlobalState, LinearFit, PlotlyTemplate
+from o2view.datamodel import GlobalState
 from o2view.domino import terminate_when_parent_process_dies
-from o2view.visualization import make_fit_trace, plot_dataset
 
 if TYPE_CHECKING:
     from multiprocessing.synchronize import Condition
@@ -128,56 +122,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                 mb=20,
                 children=[
                     dcc.Download(id="download-results"),
-                    dmc.Drawer(
-                        id="drawer-settings",
-                        title="Settings",
-                        opened=False,
-                        position="right",
-                        children=[
-                            dmc.Fieldset(
-                                legend="File Upload",
-                                children=[
-                                    dmc.NumberInput(
-                                        id="input-skip-rows",
-                                        label="Skip rows",
-                                        value=57,
-                                        min=0,
-                                    ),
-                                    dmc.Select(
-                                        id="dropdown-separator",
-                                        label="Column Separator",
-                                        data=dropdown_separator_data,
-                                        value=";",
-                                        w="100%",
-                                    ),
-                                ],
-                            ),
-                            dmc.Fieldset(
-                                legend="Plot",
-                                children=[
-                                    dmc.Select(
-                                        id="dropdown-plot-template",
-                                        label="Theme",
-                                        data=PlotlyTemplate.all_values(),
-                                        value=PlotlyTemplate.YGRIDOFF,
-                                    ),
-                                    dmc.Select(
-                                        id="dropdown-y-rangemode",
-                                        label="Y-axis Behavior",
-                                        data=dropdown_y_rangemode_data,
-                                        value="normal",
-                                        w="100%",
-                                    ),
-                                    dmc.Switch(
-                                        id="switch-show-legend",
-                                        label="Show Legend",
-                                        checked=False,
-                                        mt=10,
-                                    ),
-                                ],
-                            ),
-                        ],
-                    ),
                     dmc.Group(
                         wrap="nowrap",
                         children=[
@@ -189,178 +133,38 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                         label="Source File",
                                         placeholder="Select one",
                                         data=GlobalState.instance().unique_files(),
+                                        inputWrapperOrder=["input", "label"],
+                                        style={"width": "400px"},
                                     ),
-                                    # dcc.Upload(
-                                    #     id="upload-data",
-                                    #     children=dmc.Box(
-                                    #         [
-                                    #             "Drag and Drop or ",
-                                    #             dmc.Anchor("Select File", href="#"),
-                                    #         ]
-                                    #     ),
-                                    #     multiple=False,
-                                    #     style=upload_style,
-                                    # ),
-                                    # dmc.Text("File: -", id="label-current-file"),
                                 ],
                             ),
-                            dmc.Group(
-                                wrap="nowrap",
-                                w="100%",
-                                children=[
-                                    dmc.Select(
-                                        id="dropdown-x-data",
-                                        label="X-axis",
-                                        placeholder="Select one",
-                                        required=True,
-                                        inputWrapperOrder=["input", "label"],
-                                    ),
-                                    dmc.Select(
-                                        id="dropdown-y-data",
-                                        label="Y-axis",
-                                        placeholder="Select one",
-                                        required=True,
-                                        inputWrapperOrder=["input", "label"],
-                                    ),
-                                    dmc.Select(
-                                        id="dropdown-y2-data",
-                                        label="Secondary Y-axis",
-                                        placeholder="Select one (optional)",
-                                        clearable=True,
-                                        allowDeselect=True,
-                                        inputWrapperOrder=["input", "label"],
-                                    ),
-                                    dmc.Group(
-                                        wrap="nowrap",
-                                        flex=1,
-                                        children=[
-                                            dmc.Tooltip(
-                                                dmc.Button(
-                                                    "Plot",
-                                                    id="btn-make-plot",
-                                                    color="indigo",
-                                                    variant="filled",
-                                                    justify="space-around",
-                                                    n_clicks=0,
-                                                    size="sm",
-                                                ),
-                                                label="Re-create plot (including fits) with the current setting values",
-                                                multiline=True,
-                                            ),
-                                            dmc.Tooltip(
-                                                dmc.Button(
-                                                    "Add Fit",
-                                                    id="btn-add-fit",
-                                                    color="indigo",
-                                                    variant="filled",
-                                                    justify="space-around",
-                                                    n_clicks=0,
-                                                    size="sm",
-                                                ),
-                                                label="Fit a line to the selected data points",
-                                                multiline=True,
-                                            ),
-                                        ],
-                                    ),
-                                    dmc.Group(
-                                        wrap="nowrap",
-                                        justify="flex-end",
-                                        children=[
-                                            dmc.Tooltip(
-                                                dmc.Button(
-                                                    "Export",
-                                                    id="btn-export-results",
-                                                    color="indigo",
-                                                    variant="light",
-                                                    leftSection=DashIconify(icon="clarity:export-line"),
-                                                    n_clicks=0,
-                                                ),
-                                                label="Save contents of results table to Excel file",
-                                            ),
-                                            dmc.ActionIcon(
-                                                id="btn-show-settings",
-                                                children=DashIconify(
-                                                    icon="clarity:settings-line",
-                                                    width=20,
-                                                ),
-                                                size="input-sm",
-                                                color="indigo",
-                                                variant="light",
-                                            ),
-                                        ],
-                                    ),
-                                ],
+                            dmc.Button(
+                                "Good Fit",
+                                id="mark-good-fit",
+                                color="green",
+                                variant="outline",
+                                size="md",
+                                leftSection=DashIconify(icon="fluent:checkmark-12-filled", width=20),
+                            ),
+                            dmc.Button(
+                                "Bad Fit",
+                                id="mark-bad-fit",
+                                color="red",
+                                variant="outline",
+                                size="md",
+                                leftSection=DashIconify(icon="fluent:dismiss-circle-12-filled", width=20),
+                            ),
+                            dmc.Text(
+                                "This fit is not yet marked",  # good/bad/not yet marked
+                                id="fit-status",
+                                size="md",
+                                style={"align": "right"},
                             ),
                         ],
                     ),
                     dmc.Grid(
                         id="group-tables-graph",
                         children=[
-                            dmc.GridCol(
-                                span="content",
-                                children=dmc.Collapse(
-                                    id="collapse-tables",
-                                    opened=False,
-                                    children=[
-                                        dmc.Tabs(
-                                            keepMounted=True,
-                                            children=[
-                                                dmc.TabsList(
-                                                    [
-                                                        dmc.TabsTab("Results", value="results"),
-                                                        dmc.TabsTab("Current Dataset", value="dataset"),
-                                                    ]
-                                                ),
-                                                dmc.TabsPanel(
-                                                    children=[
-                                                        dash_table.DataTable(
-                                                            id="table-results",
-                                                            columns=result_table_columns,
-                                                            hidden_columns=[
-                                                                "x_name",
-                                                                "x_first",
-                                                                "x_last",
-                                                                "y_name",
-                                                                "y_first",
-                                                                "y_last",
-                                                                "y2_name",
-                                                                "y2_first",
-                                                                "y2_last",
-                                                            ],
-                                                            page_size=30,
-                                                            style_table={"overflowX": "scroll", "width": "30vw"},
-                                                            style_header={
-                                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                                "fontWeight": "bold",
-                                                                "textAlign": "left",
-                                                            },
-                                                            row_deletable=True,
-                                                        ),
-                                                    ],
-                                                    value="results",
-                                                ),
-                                                dmc.TabsPanel(
-                                                    children=[
-                                                        dash_table.DataTable(
-                                                            id="table-dataset",
-                                                            page_size=30,
-                                                            style_header={
-                                                                "backgroundColor": "rgb(230, 230, 230)",
-                                                                "fontWeight": "bold",
-                                                                "textAlign": "left",
-                                                            },
-                                                            style_cell={"textAlign": "left"},
-                                                            style_table={"overflowX": "scroll", "width": "30vw"},
-                                                        ),
-                                                    ],
-                                                    value="dataset",
-                                                ),
-                                            ],
-                                            value="results",
-                                        )
-                                    ],
-                                ),
-                            ),
                             dmc.GridCol(
                                 span="auto",
                                 children=dmc.AspectRatio(
@@ -404,16 +208,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                             ),
                         ],
                     ),
-                    dmc.Affix(
-                        dmc.Button(
-                            "Results & Dataset",
-                            id="btn-show-tables",
-                            color="indigo",
-                            variant="filled",
-                            leftSection=DashIconify(icon="clarity:table-line", width=20),
-                        ),
-                        position={"bottom": 20, "left": 20},
-                    ),
                     dcc.Store(id="store-dataset"),
                     dcc.Store(id="store-results"),
                     dcc.Store(id="store-graph"),
@@ -423,88 +217,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     )
 
     @callback(
-        Output("collapse-tables", "opened"),
-        Input("btn-show-tables", "n_clicks"),
-        State("collapse-tables", "opened"),
-        prevent_initial_call=True,
-    )
-    def toggle_tables(n_clicks: int, opened: bool) -> bool:
-        return not opened
-
-    @callback(
-        Output("drawer-settings", "opened"),
-        Input("btn-show-settings", "n_clicks"),
-        State("drawer-settings", "opened"),
-        prevent_initial_call=True,
-    )
-    def toggle_settings(n_clicks: int, opened: bool) -> bool:
-        return not opened
-
-    # @callback(
-    #     Output("store-dataset", "data"),
-    #     Output("label-current-file", "children"),
-    #     Output("table-results", "style_data_conditional"),
-    #     # Input("upload-data", "contents"),
-    #     State("source-file", "value"),
-    #     State("input-skip-rows", "value"),
-    #     State("dropdown-separator", "value"),
-    #     prevent_initial_call=True,
-    # )
-    # def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";"):
-    #     if not contents or not filename:
-    #         return "", "File: -"
-
-    #     parsed = parse_contents(contents, filename, skip_rows, separator)
-
-    #     result_format = [
-    #         {
-    #             "if": {
-    #                 "filter_query": "{{source_file}} = '{}'".format(filename),
-    #             },
-    #             "backgroundColor": "lightgreen",
-    #             "opacity": 1,
-    #         },
-    #         {
-    #             "if": {
-    #                 "filter_query": "{{source_file}} != '{}'".format(filename),
-    #             },
-    #             "backgroundColor": "white",
-    #             "opacity": 0.5,
-    #         },
-    #     ]
-    #     return parsed.write_json(), f"File: {filename}", result_format
-
-    @callback(
-        Output("table-dataset", "columns"),
-        Output("table-dataset", "data"),
-        Output("dropdown-x-data", "data"),
-        Output("dropdown-y-data", "data"),
-        Output("dropdown-y2-data", "data"),
-        Output("dropdown-x-data", "value"),
-        Output("dropdown-y-data", "value"),
-        Output("dropdown-y2-data", "value"),
-        Input("store-dataset", "data"),
-        prevent_initial_call=True,
-    )
-    def populate_controls(data: str):
-        if not data:
-            raise PreventUpdate
-
-        parsed = pl.read_json(io.StringIO(data))
-        cols = parsed.columns
-
-        return (
-            [{"name": col_name, "id": col_name} for col_name in cols],
-            parsed.to_dicts(),
-            cols,
-            cols,
-            cols,
-            cols[1],
-            cols[2],
-            cols[-1],
-        )
-
-    @callback(
         Output("graph", "figure"),
         Input("store-graph", "data"),
         prevent_initial_call=True,
@@ -512,225 +224,48 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     def update_graph(data: dict[str, Any]):
         return data or no_update
 
-    clientside_callback(
-        ClientsideFunction(
-            namespace="clientside",
-            function_name="updateLoadingState",
-        ),
-        Output("btn-make-plot", "loading", allow_duplicate=True),
-        Input("btn-make-plot", "n_clicks"),
-        prevent_initial_call=True,
-    )
-
     @callback(
-        Output("store-graph", "data", allow_duplicate=True),
-        Output("btn-make-plot", "loading", allow_duplicate=True),
-        Input("btn-make-plot", "n_clicks"),
-        Input("table-dataset", "data"),
-        State("dropdown-x-data", "value"),
-        State("dropdown-y-data", "value"),
-        State("dropdown-y2-data", "value"),
-        State("dropdown-plot-template", "value"),
-        State("dropdown-y-rangemode", "value"),
-        State("switch-show-legend", "checked"),
-        State("table-results", "data"),
-        State("source-file", "value"),
-        prevent_initial_call=True,
-    )
-    def make_plot(
-        n_clicks: int,
-        data: list[dict[str, Any]],
-        x_name: str,
-        y_name: str,
-        y2_name: str,
-        template: str,
-        y_rangemode: Literal["normal", "tozero", "nonnegative"],
-        show_legend: bool,
-        results: list[dict[str, Any]],
-        filename: str,
-    ) -> tuple[dict[str, Any], bool]:
-        if not data:
-            raise PreventUpdate
-
-        parsed = pl.from_dicts(data)
-        fig = plot_dataset(parsed, x_name, y_name, y2_name, template, y_rangemode, show_legend)
-
-        res_df = pl.from_dicts(results, schema=result_df_schema).filter(pl.col("source_file") == filename)
-        if not res_df.is_empty():
-            for row in res_df.iter_rows():
-                start, stop = row[1], row[2]
-                fit_df = parsed.slice(start, stop - start + 1)
-                fit = LinearFit(start, stop, fit_df, x_name, y_name, y2_name)
-                fit_trace = make_fit_trace(
-                    x=fit.x_data,
-                    y_fitted=fit.y_fitted,
-                    name=f"{filename}_{start}",
-                    slope=fit.result.slope,
-                    rsquared=fit.rsquared,
-                    start_index=start,
-                    y2_mean=fit.y2_mean,
-                )
-                fig.add_trace(fit_trace)
-
-        return fig.to_dict(), False
-
-    @callback(
-        Output("store-graph", "data", allow_duplicate=True),
-        Output("btn-make-plot", "loading", allow_duplicate=True),
+        Output("store-graph", "data"),
+        Output("fit-status", "children", allow_duplicate=True),
+        Output("fit-status", "color", allow_duplicate=True),
+        Output("fit-status", "variant", allow_duplicate=True),
         Input("source-file", "value"),
         prevent_initial_call=True,
     )
-    def plot_file(source_file_cleaned: str) -> tuple[dict[str, Any], bool]:
-        return GlobalState.instance().plot_data_for_file(source_file_cleaned), False
-
-    # @callback(
-    #     Output("store-graph", "data", allow_duplicate=True),
-    #     Output("table-results", "data"),
-    #     Input("btn-add-fit", "n_clicks"),
-    #     State("graph", "selectedData"),
-    #     State("dropdown-x-data", "value"),
-    #     State("dropdown-y-data", "value"),
-    #     State("dropdown-y2-data", "value"),
-    #     State("source-file", "value"),
-    #     State("table-results", "data"),
-    #     prevent_initial_call=True,
-    # )
-    # def add_fit(
-    #     n_clicks: int,
-    #     selected_data: dict[str, Any] | None,
-    #     x_name: str,
-    #     y_name: str,
-    #     y2_name: str,
-    #     filename: str,
-    #     results: list[dict[str, Any]],
-    # ):
-    #     if not n_clicks or not selected_data:
-    #         raise PreventUpdate
-
-    #     df = pl.from_dicts(
-    #         selected_data["points"],
-    #         schema={
-    #             "curveNumber": pl.Int32,
-    #             "pointNumber": pl.Int32,
-    #             "pointIndex": pl.Int32,
-    #             "x": pl.Float64,
-    #             "y": pl.Float64,
-    #         },
-    #     )
-
-    #     if y2_name:
-    #         fit_df = df.select(
-    #             pl.col("pointIndex").filter(pl.col("curveNumber") == 0).alias("index"),
-    #             pl.col("x").filter(pl.col("curveNumber") == 0).alias(x_name),
-    #             pl.col("y").filter(pl.col("curveNumber") == 0).alias(y_name),
-    #             pl.col("y").filter(pl.col("curveNumber") == 1).alias(y2_name),
-    #         )
-    #     else:
-    #         fit_df = df.select(
-    #             pl.col("pointIndex").filter(pl.col("curveNumber") == 0).alias("index"),
-    #             pl.col("x").filter(pl.col("curveNumber") == 0).alias(x_name),
-    #             pl.col("y").filter(pl.col("curveNumber") == 0).alias(y_name),
-    #         )
-
-    #     fit_df = fit_df.sort("index", maintain_order=True)
-    #     idx = fit_df.get_column("index")
-
-    #     start, stop = idx.item(0), idx.item(-1)
-
-    #     fit = LinearFit(
-    #         start_index=start,
-    #         end_index=stop,
-    #         df=fit_df,
-    #         x_name=x_name,
-    #         y_name=y_name,
-    #         y2_name=y2_name,
-    #     )
-
-    #     result_df = pl.from_dicts(results, schema=result_df_schema)
-    #     result_df = result_df.extend(fit.make_result(filename)).sort("source_file", "start_index", maintain_order=True)
-
-    #     fit_trace = make_fit_trace(
-    #         x=fit.x_data,
-    #         y_fitted=fit.y_fitted,
-    #         name=f"{filename}_{fit.start_index}",
-    #         slope=fit.result.slope,
-    #         rsquared=fit.result.rvalue,
-    #         start_index=fit.start_index,
-    #         y2_mean=fit.y2_mean,
-    #     )
-    #     patched_fig = Patch()
-    #     # Clear the selection region
-    #     patched_fig["layout"]["selections"].clear()
-
-    #     patched_fig["data"].append(fit_trace)
-    #     return patched_fig, result_df.to_dicts()
-
-    # @callback(
-    #     Output("store-graph", "data", allow_duplicate=True),
-    #     Input("table-results", "data_previous"),
-    #     State("table-results", "data"),
-    #     State("graph", "figure"),
-    #     prevent_initial_call=True,
-    # )
-    # def remove_fit(
-    #     data_previous: list[dict[str, Any]],
-    #     data_current: list[dict[str, Any]],
-    #     fig: FigureDict,
-    # ):
-    #     if not data_previous:
-    #         raise PreventUpdate
-
-    #     previous = pl.from_dicts(data_previous, schema=result_df_schema)
-    #     current = pl.from_dicts(data_current, schema=result_df_schema)
-
-    #     removed = previous.join(current, on=previous.columns, how="anti")
-
-    #     patched_fig = Patch()
-    #     trace_index = find_trace_index(fig, removed.item(0, "source_file"), removed.item(0, "start_index"))
-    #     if trace_index == -1:
-    #         raise PreventUpdate
-
-    #     del patched_fig["data"][trace_index]
-    #     return patched_fig
-
-    # @callback(
-    #     Output("store-graph", "data", allow_duplicate=True),
-    #     Output("btn-make-plot", "n_clicks"),
-    #     Input("table-results", "selected_rows"),
-    #     State("table-results", "data"),
-    #     State("graph", "figure"),
-    #     State("btn-make-plot", "n_clicks"),
-    #     prevent_initial_call=True,
-    # )
-    # def highlight_selected_results(
-    #     selected_rows: list[int], data: list[dict[str, Any]], fig: FigureDict, n_clicks: int
-    # ):
-    #     if not selected_rows:
-    #         # if no rows are selected, restore original plot by simulating click on the plot button
-    #         return no_update, n_clicks + 1
-
-    #     rows = [data[i] for i in selected_rows]
-    #     selected = pl.from_dicts(rows, schema=result_df_schema)
-
-    #     patched_fig = Patch()
-    #     for row in selected.iter_rows(named=True):
-    #         trace_index = find_trace_index(fig, row["source_file"], row["start_index"])
-    #         if trace_index == -1:
-    #             continue
-
-    #         patched_fig["data"][trace_index]["line"] = {"color": "red", "width": 5, "dash": "dash"}
-
-    #     return patched_fig, no_update
+    def plot_file(source_file_cleaned: str):
+        fig = GlobalState.instance().plot_data_for_file(source_file_cleaned)
+        status = GlobalState.instance().get_marked_status(source_file_cleaned)
+        if status == "ok":
+            return fig, "This fit is marked as good", "green", "filled"
+        elif status == "bad":
+            return fig, "This fit is marked as bad", "red", "filled"
+        else:
+            return fig, "This fit is not yet marked", "gray", "light"
 
     @callback(
-        Output("download-results", "data"),
-        Input("btn-export-results", "n_clicks"),
-        State("table-results", "data"),
+        Output("fit-status", "children", allow_duplicate=True),
+        Output("fit-status", "color", allow_duplicate=True),
+        Output("fit-status", "variant", allow_duplicate=True),
+        Input("source-file", "value"),
+        Input("mark-good-fit", "n_clicks"),
+        Input("mark-bad-fit", "n_clicks"),
         prevent_initial_call=True,
     )
-    def export_results(n_clicks: int, data: list[dict[str, Any]]) -> dict[str, Any]:
-        df = pl.from_dicts(data, schema=result_df_schema)
-        return dcc.express.send_bytes(df.write_excel, "o2view_results.xlsx")
+    def mark_file(
+        source_file_cleaned: str,
+        mark_good_file: int | None,
+        mark_bad_file: int | None,
+    ):
+        if not ctx.triggered_id:
+            return no_update, no_update, no_update
+        elif ctx.triggered_id == "mark-good-fit":
+            GlobalState.instance().mark_file(source_file_cleaned, "ok")
+            return "This fit is marked as good", "green", "filled"
+        elif ctx.triggered_id == "mark-bad-fit":
+            GlobalState.instance().mark_file(source_file_cleaned, "bad")
+            return "This fit is marked as bad", "red", "filled"
+        else:
+            return "This fit is not yet marked", "gray", "light"
 
     with server_is_started:
         server_is_started.notify()
