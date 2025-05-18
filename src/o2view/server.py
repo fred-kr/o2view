@@ -121,22 +121,19 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                 mt=20,
                 mb=20,
                 children=[
-                    dcc.Download(id="download-results"),
                     dmc.Group(
                         wrap="nowrap",
                         children=[
-                            dmc.Stack(
-                                gap=5,
-                                children=[
-                                    dmc.Select(
-                                        id="source-file",
-                                        label="Source File",
-                                        placeholder="Select one",
-                                        data=GlobalState.instance().unique_files(),
-                                        inputWrapperOrder=["input", "label"],
-                                        style={"width": "400px"},
-                                    ),
-                                ],
+                            dmc.Select(
+                                id="source-file",
+                                label="Source File",
+                                placeholder="Select one",
+                                searchable=True,
+                                checkIconPosition="right",
+                                maxDropdownHeight=300,
+                                data=GlobalState.instance().unique_files(),
+                                inputWrapperOrder=["input", "label"],
+                                style={"width": "400px"},
                             ),
                             dmc.Button(
                                 "Good Fit",
@@ -208,8 +205,6 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                             ),
                         ],
                     ),
-                    dcc.Store(id="store-dataset"),
-                    dcc.Store(id="store-results"),
                     dcc.Store(id="store-graph"),
                 ],
             )
