@@ -71,6 +71,8 @@ class GlobalState:
         return self.eggs_metadata.filter(pl.col("source_file_cleaned") == source_file_cleaned)
 
     def plot_data_for_file(self, source_file_cleaned: str) -> go.Figure:
+        if not source_file_cleaned:
+            return go.Figure()
         df = self.data_for_file(source_file_cleaned)
         metadata = self.metadata_for_file(source_file_cleaned)
         fig = plot_dataset(df, "datetime_local", "oxygen", "temperature")
@@ -84,7 +86,7 @@ class GlobalState:
             x=fit_df.get_column("datetime_local"),
             y=fit_df.get_column("fitted"),
             mode="lines",
-            name="fit",
+            name=f"Fit, r^2={res.rvalue**2:.3f}",
             line=dict(color="darkorange", width=4),
         )
         return fig
