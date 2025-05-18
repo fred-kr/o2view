@@ -1,10 +1,11 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import plotly.graph_objects as go
 import polars as pl
 from plotly.subplots import make_subplots
 
-from o2view.datamodel import FigureDict, PlotlyTemplate
+if TYPE_CHECKING:
+    from o2view.datamodel import FigureDict
 
 
 def plot_dataset(
@@ -12,7 +13,7 @@ def plot_dataset(
     x_name: str,
     y_name: str,
     y2_name: str | None = None,
-    theme: str = PlotlyTemplate.MANTINE_LIGHT,
+    theme: str = "mantine_light",
     y_rangemode: Literal["normal", "tozero", "nonnegative"] = "normal",
     show_legend: bool = True,
 ) -> go.Figure:
@@ -84,7 +85,7 @@ def make_fit_trace(
     )
 
 
-def find_trace_index(figure_dict: FigureDict, source_file: str, start_index: int) -> int:
+def find_trace_index(figure_dict: "FigureDict", source_file: str, start_index: int) -> int:
     return next(
         (i for i, trace in enumerate(figure_dict["data"]) if trace["name"] == f"{source_file}_{start_index}"),
         -1,

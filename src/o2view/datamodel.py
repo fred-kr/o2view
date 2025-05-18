@@ -8,11 +8,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Annotated, Any, NamedTuple, NotRequired, TypedDict
 
+import plotly.graph_objects as go
 import polars as pl
 import polars.selectors as cs
 from scipy import stats
 
 import janitor.polars  # noqa: F401 # isort:skip
+
+from o2view.visualization import plot_dataset
 
 D = decimal.Decimal
 
@@ -26,6 +29,63 @@ def _simulate_contents(path: str) -> str:
 
     mime_type, _ = mimetypes.guess_type(path)
     return f"data:{mime_type};base64,{data}"
+
+
+class GlobalState:
+    _instance = None
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        if GlobalState._instance is not None:
+            raise RuntimeError("GlobalState is a singleton class")
+        GlobalState._instance = self
+
+        self.source_data: pl.DataFrame = pl.read_ipc("src/o2view/data/source_cleaned_combined.arrow")
+        self.eggs_metadata: pl.DataFrame = pl.read_ipc("src/o2view/data/eggs_metadata_with_fits.arrow")
+        self.bacteria_metadata: pl.DataFrame = pl.read_ipc("src/o2view/data/bacteria_metadata_with_fits.arrow")
+
+    def unique_files(self) -> list[str]:
+        """Get a list of unique source files from the source data."""
+        return (
+            self.source_data.select(pl.col("source_file_cleaned"))
+            .unique(maintain_order=True)
+            .get_column("source_file_cleaned")
+            .to_list()
+        )
+
+    def data_for_file(self, source_file_cleaned: str) -> pl.DataFrame:
+        """Get the data for a specific source file."""
+        return self.source_data.filter(pl.col("source_file_cleaned") == source_file_cleaned)
+
+    def metadata_for_file(self, source_file_cleaned: str) -> pl.DataFrame:
+        """Get the metadata for a specific source file."""
+        if "bacteria" in source_file_cleaned.lower():
+            return self.bacteria_metadata.filter(pl.col("source_file_cleaned") == source_file_cleaned)
+        return self.eggs_metadata.filter(pl.col("source_file_cleaned") == source_file_cleaned)
+
+    def plot_data_for_file(self, source_file_cleaned: str) -> go.Figure:
+        df = self.data_for_file(source_file_cleaned)
+        metadata = self.metadata_for_file(source_file_cleaned)
+        fig = plot_dataset(df, "datetime_local", "oxygen", "temperature")
+        if metadata.is_empty():
+            return fig
+        start, stop = metadata.item(0, "fit_start_time"), metadata.item(0, "fit_stop_time")
+        fit_df = df.filter(pl.col("datetime_local").is_between(start, stop))
+        res = stats.linregress(fit_df.get_column("time_seconds"), fit_df.get_column("oxygen"))
+        fit_df = fit_df.with_columns((res.slope * pl.col("time_seconds") + res.intercept).alias("fitted"))
+        fig.add_scattergl(
+            x=fit_df.get_column("datetime_local"),
+            y=fit_df.get_column("fitted"),
+            mode="lines",
+            name="fit",
+            line=dict(color="darkorange", width=4),
+        )
+        return fig
 
 
 class PlotlyTemplate(enum.StrEnum):
@@ -274,21 +334,13 @@ class LinearFit:
         )
 
 
-class GlobalState:
-    def __init__(self) -> None:
-        self.source_file = ""
-        self.dataset = pl.DataFrame()
-
-
 @dataclass(slots=True)
 class Record:
     name: str
     data: pl.DataFrame
     source_file: str
     sampling_rate: decimal.Decimal
-    fertilization_time: datetime.datetime
-    start_time: datetime.datetime
-    stop_time: datetime.datetime
+    fertilization_time: datetime.datetime  # Newport time
     record_type: str  # eggs, bacteria
     identifier: str  # F01, F02, ...
     temperature_group: str  # 0C, 4C
@@ -299,8 +351,8 @@ class Record:
     fresh_weight_adjusted: decimal.Decimal  # grams
     bacteria_group: str  # replace with enum
     volume_respiration_chamber: decimal.Decimal  # ml
-    analysis_start_time: datetime.datetime  # start fit at this time
-    analysis_stop_time: datetime.datetime  # stop fit at this time
+    analysis_start_time: datetime.datetime  # Newport time, time of fit start
+    analysis_stop_time: datetime.datetime  # Newport time, time of fit stop
     comment: str
 
     ### column accessors =====
@@ -329,6 +381,14 @@ class Record:
         return self.data.get_column("datetime_local")
 
     ### computed properties =====
+    @property
+    def start_time(self) -> datetime.datetime:
+        return self.col_datetime_presens.item(0)
+
+    @property
+    def stop_time(self) -> datetime.datetime:
+        return self.col_datetime_presens.item(-1)
+
     @property
     def duration(self) -> datetime.timedelta:
         return self.stop_time - self.start_time

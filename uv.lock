@@ -138,7 +138,7 @@ dependencies = [
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5d/e3/d9eebd98cec05c9775313eedca336cc4b45f705b488bb37ed9796fd3988b/dash_mantine_components-1.2.0.tar.gz", hash = "sha256:443d019d046be6baffcb165898619b0e2db14247e74e31b4bb69e7a9581dc78f", size = 1112589 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/26/9d1c19fe8b58ed2cd206e800f22352713f50f8eb239b1c418e39494cf520/dash_mantine_components-1.0.0-py3-none-any.whl", hash = "sha256:e5c1fb32db24ece57727275723e9642a6e5dd616a09f22a569f4bc1618a826c4", size = 1794022 },
+    { url = "https://files.pythonhosted.org/packages/21/ed/22f3f3451c377be60b992d74499bf583055681bafcd8b61fbe49b4de2816/dash_mantine_components-1.2.0-py3-none-any.whl", hash = "sha256:29cd2dc1175074b79ceb8c2968f0d6f11943f383ab69e767a9e58ce2f3fbe70b", size = 1509611 },
 ]
 
 [[package]]
@@ -263,11 +263,11 @@ wheels = [
 
 [[package]]
 name = "narwhals"
-version = "1.39.0"
+version = "1.39.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/80/eb/50bd207820ac84b86dee216e2caf3fdf456e59bc854543f8d0ab8637cd66/narwhals-1.39.0.tar.gz", hash = "sha256:6f114def701fc6a23b0523ad53700ae545ad3f5ece041c64dc3ad59e699da43f", size = 471928 }
+sdist = { url = "https://files.pythonhosted.org/packages/56/e6/66682dd5ffe656358e07194fa9551b1d41e33952831a40553e791dd98dfc/narwhals-1.39.1.tar.gz", hash = "sha256:cf15389e6f8c5321e8cd0ca8b5bace3b1aea5f5622fa59dfd64821998741d836", size = 484444 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/58/a12a534269aa5ba9abdf73a9e0deb600297b71cbf7291bca212944663143/narwhals-1.39.0-py3-none-any.whl", hash = "sha256:50b6778f4b4249eb86c88dd17c3907dd004a16ec25b02d5effaf226a2bcfb940", size = 339242 },
+    { url = "https://files.pythonhosted.org/packages/70/c4/b83520ecc27840a4d58bd585ae0ec0f8a4f2b0c5a965b66749254a54de0e/narwhals-1.39.1-py3-none-any.whl", hash = "sha256:68d0f29c760f1a9419ada537f35f21ff202b0be1419e6d22135a0352c6d96deb", size = 355009 },
 ]
 
 [[package]]
@@ -335,18 +335,16 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dash", specifier = ">=3.0.0rc4" },
+    { name = "dash", specifier = ">=3.0.4" },
     { name = "dash-iconify", specifier = ">=0.1.2" },
-    { name = "dash-mantine-components", specifier = ">=1.0.0" },
-    { name = "numpy", specifier = ">=2.2.4" },
-    { name = "numpy", specifier = ">=2.2.4" },
-    { name = "plotly", specifier = ">=6.0.0" },
-    { name = "polars", extras = ["excel"], specifier = ">=1.25.2" },
-    { name = "polars", extras = ["excel"], specifier = ">=1.25.2" },
+    { name = "dash-mantine-components", specifier = ">=1.2.0" },
+    { name = "numpy", specifier = ">=2.2.5" },
+    { name = "plotly", specifier = ">=6.1.0" },
+    { name = "polars", extras = ["excel"], specifier = ">=1.29.0" },
     { name = "pyjanitor", specifier = ">=0.31.0" },
     { name = "pywebview", specifier = ">=5.4" },
-    { name = "scipy", specifier = ">=1.15.2" },
-    { name = "setproctitle", specifier = ">=1.3.5" },
+    { name = "scipy", specifier = ">=1.15.3" },
+    { name = "setproctitle", specifier = ">=1.3.6" },
 ]
 
 [[package]]
@@ -412,29 +410,29 @@ wheels = [
 
 [[package]]
 name = "plotly"
-version = "6.1.0rc0"
+version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "narwhals" },
     { name = "packaging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/ca/68322c182653482ac51c8d7367898a1f8ecb0e3ad744984c54f68163d472/plotly-6.1.0rc0.tar.gz", hash = "sha256:13f38279b43989162723cfcbcf8ad2cf9a4d26d2304ca1109f7a925b3753fe0e", size = 7544737 }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/e3/66eabba0b35095027e1ae5cb2e091cd168d44362242b5496baac9a460697/plotly-6.1.0.tar.gz", hash = "sha256:f13f497ccc2d97f06f771a30b27fab0cbd220f2975865f4ecbc75057135521de", size = 7545417 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/fa/e1cfdc74923990ca696b8d21071803f6865f0f6e8a841c0a577dcc7dc2bf/plotly-6.1.0rc0-py3-none-any.whl", hash = "sha256:529f1147f8c405e4d340dd7805283a4d1b95d123f6534b06c35d6ce549e38be3", size = 16118069 },
+    { url = "https://files.pythonhosted.org/packages/ee/11/83ae52318353f9da4a88cc23e7f9dbc3d449b3f0fd6158fba15eb3c3b816/plotly-6.1.0-py3-none-any.whl", hash = "sha256:a29d3ed523c9d7960095693af1ee52689830df0f9c6bae3e5e92c20c4f5684c3", size = 16118476 },
 ]
 
 [[package]]
 name = "polars"
-version = "1.29.0"
+version = "1.30.0b1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0b/92/8d0e80fef779a392b1a736b554ffba62403026bad7df8a9de8b61dce018f/polars-1.29.0.tar.gz", hash = "sha256:d2acb71fce1ff0ea76db5f648abd91a7a6c460fafabce9a2e8175184efa00d02", size = 4582973 }
+sdist = { url = "https://files.pythonhosted.org/packages/01/d5/7804ed2a6636a99b8deae7adab0c6a717fca6359f9cd3a290bf4582711d4/polars-1.30.0b1.tar.gz", hash = "sha256:11f68dcee44ac3309414668de51cc690fa9508a6130ab96cf4db0ca4cb49f291", size = 4665164 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/5f/b277179cfce1258fecf4ad73cf627f670be41fdf088727090f68ca9c96ff/polars-1.29.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:d053ee3217df31468caf2f5ddb9fd0f3a94fd42afdf7d9abe23d9d424adca02b", size = 34206809 },
-    { url = "https://files.pythonhosted.org/packages/34/e7/634e5cb55ce8bef23ac8ad8e3834c9045f4b3cbdff1fb9e7826d864436e6/polars-1.29.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:14131078e365eae5ccda3e67383cd43c0c0598d7f760bdf1cb4082566c5494ce", size = 31100055 },
-    { url = "https://files.pythonhosted.org/packages/50/15/0e9072e410731980ebc567c60a0a5f02bc2183310e48704ef83682cdd54c/polars-1.29.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:54f6902da333f99208b8d27765d580ba0299b412787c0564275912122c228e40", size = 34828438 },
-    { url = "https://files.pythonhosted.org/packages/69/c0/90fcaac5c95aa225b3899698289c0424d429ef72248b593f15294f95a35e/polars-1.29.0-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:7a0ac6a11088279af4d715f4b58068835f551fa5368504a53401743006115e78", size = 32073830 },
-    { url = "https://files.pythonhosted.org/packages/17/ed/e5e570e22a03549a3c5397035a006b2c6343856a9fd15cccb5db39bdfa0a/polars-1.29.0-cp39-abi3-win_amd64.whl", hash = "sha256:f5aac4656e58b1e12f9481950981ef68b5b0e53dd4903bd72472efd2d09a74c8", size = 34971841 },
-    { url = "https://files.pythonhosted.org/packages/45/fd/9039f609d76b3ebb13777f289502a00b52709aea5c35aed01d1090ac142f/polars-1.29.0-cp39-abi3-win_arm64.whl", hash = "sha256:0c105b07b980b77fe88c3200b015bf4695e53185385f0f244c13e2d1027c7bbf", size = 31298689 },
+    { url = "https://files.pythonhosted.org/packages/97/19/f734c746d1633f7a4587e91d52131539db7ac59dd5f75c59693db0f3f76e/polars-1.30.0b1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:c2cba8fff52b6e60f080cabf646dfb5eb9e4d62929eb4b5b5ac0a12a22e97643", size = 35693536 },
+    { url = "https://files.pythonhosted.org/packages/54/c3/106d472f94c46a4339a5b68a6e3c90f4b2e6d889974f1054583069532d05/polars-1.30.0b1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:09793672f8e2a8344e8ea3bd65f72c114bd9e3e443fffab079627348d34000b2", size = 32461255 },
+    { url = "https://files.pythonhosted.org/packages/ca/c2/8dca7718e277b4459da38b188b44c2f4e98e3f8dcfb135de51568f966300/polars-1.30.0b1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c0bda7edabf213135602e2ca8eb2d712b40a231d5b7e623c0612a13a09c496cd", size = 36246193 },
+    { url = "https://files.pythonhosted.org/packages/6c/dd/2a39699be750d6d2a4396b805d426c22ef61afab5c0fa0089dea3f56841a/polars-1.30.0b1-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:fe190e0bfc38c0a41db6eccfe3c3af2b4f37e19104010e3738d3e6a381b67b51", size = 33390884 },
+    { url = "https://files.pythonhosted.org/packages/fa/00/4c525720a26dc1e3fa141aa190a4f4e2fdf1c39d28adfa2e1fb1b3604bad/polars-1.30.0b1-cp39-abi3-win_amd64.whl", hash = "sha256:56164b6c1a150c61421d598f76d59a8b165a187be70033ecf0945520a54671a0", size = 36346664 },
+    { url = "https://files.pythonhosted.org/packages/41/65/2ebe9cfb1aa30c8ab939cf2e9f779186a96c76b9ba393d0e1835f1f1cc96/polars-1.30.0b1-cp39-abi3-win_arm64.whl", hash = "sha256:3f7442ff2d9ea8f165a134bfe0e1eca223b9767ba8864a433396409e3e319f2c", size = 32632877 },
 ]
 
 [package.optional-dependencies]
@@ -722,11 +720,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "80.4.0"
+version = "80.7.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/95/32/0cc40fe41fd2adb80a2f388987f4f8db3c866c69e33e0b4c8b093fdf700e/setuptools-80.4.0.tar.gz", hash = "sha256:5a78f61820bc088c8e4add52932ae6b8cf423da2aff268c23f813cfbb13b4006", size = 1315008 }
+sdist = { url = "https://files.pythonhosted.org/packages/9e/8b/dc1773e8e5d07fd27c1632c45c1de856ac3dbf09c0147f782ca6d990cf15/setuptools-80.7.1.tar.gz", hash = "sha256:f6ffc5f0142b1bd8d0ca94ee91b30c0ca862ffd50826da1ea85258a06fd94552", size = 1319188 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/93/dba5ed08c2e31ec7cdc2ce75705a484ef0be1a2fecac8a58272489349de8/setuptools-80.4.0-py3-none-any.whl", hash = "sha256:6cdc8cb9a7d590b237dbe4493614a9b75d0559b888047c1f67d49ba50fc3edb2", size = 1200812 },
+    { url = "https://files.pythonhosted.org/packages/a1/18/0e835c3a557dc5faffc8f91092f62fc337c1dab1066715842e7a4b318ec4/setuptools-80.7.1-py3-none-any.whl", hash = "sha256:ca5cc1069b85dc23070a6628e6bcecb3292acac802399c7f8edc0100619f9009", size = 1200776 },
 ]
 
 [[package]]

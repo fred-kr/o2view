@@ -9,7 +9,6 @@ from dash import (
     Dash,
     Input,
     Output,
-    Patch,
     State,
     _dash_renderer,
     callback,
@@ -22,9 +21,9 @@ from dash.dash_table.Format import Format, Scheme
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 
-from o2view.datamodel import FigureDict, LinearFit, PlotlyTemplate, parse_contents
+from o2view.datamodel import GlobalState, LinearFit, PlotlyTemplate
 from o2view.domino import terminate_when_parent_process_dies
-from o2view.visualization import find_trace_index, make_fit_trace, plot_dataset
+from o2view.visualization import make_fit_trace, plot_dataset
 
 if TYPE_CHECKING:
     from multiprocessing.synchronize import Condition
@@ -185,18 +184,24 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                             dmc.Stack(
                                 gap=5,
                                 children=[
-                                    dcc.Upload(
-                                        id="upload-data",
-                                        children=dmc.Box(
-                                            [
-                                                "Drag and Drop or ",
-                                                dmc.Anchor("Select File", href="#"),
-                                            ]
-                                        ),
-                                        multiple=False,
-                                        style=upload_style,
+                                    dmc.Select(
+                                        id="source-file",
+                                        label="Source File",
+                                        placeholder="Select one",
+                                        data=GlobalState.instance().unique_files(),
                                     ),
-                                    dmc.Text("File: -", id="label-current-file"),
+                                    # dcc.Upload(
+                                    #     id="upload-data",
+                                    #     children=dmc.Box(
+                                    #         [
+                                    #             "Drag and Drop or ",
+                                    #             dmc.Anchor("Select File", href="#"),
+                                    #         ]
+                                    #     ),
+                                    #     multiple=False,
+                                    #     style=upload_style,
+                                    # ),
+                                    # dmc.Text("File: -", id="label-current-file"),
                                 ],
                             ),
                             dmc.Group(
@@ -435,39 +440,39 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     def toggle_settings(n_clicks: int, opened: bool) -> bool:
         return not opened
 
-    @callback(
-        Output("store-dataset", "data"),
-        Output("label-current-file", "children"),
-        Output("table-results", "style_data_conditional"),
-        Input("upload-data", "contents"),
-        State("upload-data", "filename"),
-        State("input-skip-rows", "value"),
-        State("dropdown-separator", "value"),
-        prevent_initial_call=True,
-    )
-    def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";"):
-        if not contents or not filename:
-            return "", "File: -"
+    # @callback(
+    #     Output("store-dataset", "data"),
+    #     Output("label-current-file", "children"),
+    #     Output("table-results", "style_data_conditional"),
+    #     # Input("upload-data", "contents"),
+    #     State("source-file", "value"),
+    #     State("input-skip-rows", "value"),
+    #     State("dropdown-separator", "value"),
+    #     prevent_initial_call=True,
+    # )
+    # def read_presens(contents: str, filename: str, skip_rows: int = 57, separator: str = ";"):
+    #     if not contents or not filename:
+    #         return "", "File: -"
 
-        parsed = parse_contents(contents, filename, skip_rows, separator)
+    #     parsed = parse_contents(contents, filename, skip_rows, separator)
 
-        result_format = [
-            {
-                "if": {
-                    "filter_query": "{{source_file}} = '{}'".format(filename),
-                },
-                "backgroundColor": "lightgreen",
-                "opacity": 1,
-            },
-            {
-                "if": {
-                    "filter_query": "{{source_file}} != '{}'".format(filename),
-                },
-                "backgroundColor": "white",
-                "opacity": 0.5,
-            },
-        ]
-        return parsed.write_json(), f"File: {filename}", result_format
+    #     result_format = [
+    #         {
+    #             "if": {
+    #                 "filter_query": "{{source_file}} = '{}'".format(filename),
+    #             },
+    #             "backgroundColor": "lightgreen",
+    #             "opacity": 1,
+    #         },
+    #         {
+    #             "if": {
+    #                 "filter_query": "{{source_file}} != '{}'".format(filename),
+    #             },
+    #             "backgroundColor": "white",
+    #             "opacity": 0.5,
+    #         },
+    #     ]
+    #     return parsed.write_json(), f"File: {filename}", result_format
 
     @callback(
         Output("table-dataset", "columns"),
@@ -519,7 +524,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
 
     @callback(
         Output("store-graph", "data", allow_duplicate=True),
-        Output("btn-make-plot", "loading"),
+        Output("btn-make-plot", "loading", allow_duplicate=True),
         Input("btn-make-plot", "n_clicks"),
         Input("table-dataset", "data"),
         State("dropdown-x-data", "value"),
@@ -529,7 +534,7 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
         State("dropdown-y-rangemode", "value"),
         State("switch-show-legend", "checked"),
         State("table-results", "data"),
-        State("upload-data", "filename"),
+        State("source-file", "value"),
         prevent_initial_call=True,
     )
     def make_plot(
@@ -571,113 +576,122 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
 
     @callback(
         Output("store-graph", "data", allow_duplicate=True),
-        Output("table-results", "data"),
-        Input("btn-add-fit", "n_clicks"),
-        State("graph", "selectedData"),
-        State("dropdown-x-data", "value"),
-        State("dropdown-y-data", "value"),
-        State("dropdown-y2-data", "value"),
-        State("upload-data", "filename"),
-        State("table-results", "data"),
+        Output("btn-make-plot", "loading", allow_duplicate=True),
+        Input("source-file", "value"),
         prevent_initial_call=True,
     )
-    def add_fit(
-        n_clicks: int,
-        selected_data: dict[str, Any] | None,
-        x_name: str,
-        y_name: str,
-        y2_name: str,
-        filename: str,
-        results: list[dict[str, Any]],
-    ):
-        if not n_clicks or not selected_data:
-            raise PreventUpdate
+    def plot_file(source_file_cleaned: str) -> tuple[dict[str, Any], bool]:
+        return GlobalState.instance().plot_data_for_file(source_file_cleaned), False
 
-        df = pl.from_dicts(
-            selected_data["points"],
-            schema={
-                "curveNumber": pl.Int32,
-                "pointNumber": pl.Int32,
-                "pointIndex": pl.Int32,
-                "x": pl.Float64,
-                "y": pl.Float64,
-            },
-        )
+    # @callback(
+    #     Output("store-graph", "data", allow_duplicate=True),
+    #     Output("table-results", "data"),
+    #     Input("btn-add-fit", "n_clicks"),
+    #     State("graph", "selectedData"),
+    #     State("dropdown-x-data", "value"),
+    #     State("dropdown-y-data", "value"),
+    #     State("dropdown-y2-data", "value"),
+    #     State("source-file", "value"),
+    #     State("table-results", "data"),
+    #     prevent_initial_call=True,
+    # )
+    # def add_fit(
+    #     n_clicks: int,
+    #     selected_data: dict[str, Any] | None,
+    #     x_name: str,
+    #     y_name: str,
+    #     y2_name: str,
+    #     filename: str,
+    #     results: list[dict[str, Any]],
+    # ):
+    #     if not n_clicks or not selected_data:
+    #         raise PreventUpdate
 
-        if y2_name:
-            fit_df = df.select(
-                pl.col("pointIndex").filter(pl.col("curveNumber") == 0).alias("index"),
-                pl.col("x").filter(pl.col("curveNumber") == 0).alias(x_name),
-                pl.col("y").filter(pl.col("curveNumber") == 0).alias(y_name),
-                pl.col("y").filter(pl.col("curveNumber") == 1).alias(y2_name),
-            )
-        else:
-            fit_df = df.select(
-                pl.col("pointIndex").filter(pl.col("curveNumber") == 0).alias("index"),
-                pl.col("x").filter(pl.col("curveNumber") == 0).alias(x_name),
-                pl.col("y").filter(pl.col("curveNumber") == 0).alias(y_name),
-            )
+    #     df = pl.from_dicts(
+    #         selected_data["points"],
+    #         schema={
+    #             "curveNumber": pl.Int32,
+    #             "pointNumber": pl.Int32,
+    #             "pointIndex": pl.Int32,
+    #             "x": pl.Float64,
+    #             "y": pl.Float64,
+    #         },
+    #     )
 
-        fit_df = fit_df.sort("index", maintain_order=True)
-        idx = fit_df.get_column("index")
+    #     if y2_name:
+    #         fit_df = df.select(
+    #             pl.col("pointIndex").filter(pl.col("curveNumber") == 0).alias("index"),
+    #             pl.col("x").filter(pl.col("curveNumber") == 0).alias(x_name),
+    #             pl.col("y").filter(pl.col("curveNumber") == 0).alias(y_name),
+    #             pl.col("y").filter(pl.col("curveNumber") == 1).alias(y2_name),
+    #         )
+    #     else:
+    #         fit_df = df.select(
+    #             pl.col("pointIndex").filter(pl.col("curveNumber") == 0).alias("index"),
+    #             pl.col("x").filter(pl.col("curveNumber") == 0).alias(x_name),
+    #             pl.col("y").filter(pl.col("curveNumber") == 0).alias(y_name),
+    #         )
 
-        start, stop = idx.item(0), idx.item(-1)
+    #     fit_df = fit_df.sort("index", maintain_order=True)
+    #     idx = fit_df.get_column("index")
 
-        fit = LinearFit(
-            start_index=start,
-            end_index=stop,
-            df=fit_df,
-            x_name=x_name,
-            y_name=y_name,
-            y2_name=y2_name,
-        )
+    #     start, stop = idx.item(0), idx.item(-1)
 
-        result_df = pl.from_dicts(results, schema=result_df_schema)
-        result_df = result_df.extend(fit.make_result(filename)).sort("source_file", "start_index", maintain_order=True)
+    #     fit = LinearFit(
+    #         start_index=start,
+    #         end_index=stop,
+    #         df=fit_df,
+    #         x_name=x_name,
+    #         y_name=y_name,
+    #         y2_name=y2_name,
+    #     )
 
-        fit_trace = make_fit_trace(
-            x=fit.x_data,
-            y_fitted=fit.y_fitted,
-            name=f"{filename}_{fit.start_index}",
-            slope=fit.result.slope,
-            rsquared=fit.result.rvalue,
-            start_index=fit.start_index,
-            y2_mean=fit.y2_mean,
-        )
-        patched_fig = Patch()
-        # Clear the selection region
-        patched_fig["layout"]["selections"].clear()
+    #     result_df = pl.from_dicts(results, schema=result_df_schema)
+    #     result_df = result_df.extend(fit.make_result(filename)).sort("source_file", "start_index", maintain_order=True)
 
-        patched_fig["data"].append(fit_trace)
-        return patched_fig, result_df.to_dicts()
+    #     fit_trace = make_fit_trace(
+    #         x=fit.x_data,
+    #         y_fitted=fit.y_fitted,
+    #         name=f"{filename}_{fit.start_index}",
+    #         slope=fit.result.slope,
+    #         rsquared=fit.result.rvalue,
+    #         start_index=fit.start_index,
+    #         y2_mean=fit.y2_mean,
+    #     )
+    #     patched_fig = Patch()
+    #     # Clear the selection region
+    #     patched_fig["layout"]["selections"].clear()
 
-    @callback(
-        Output("store-graph", "data", allow_duplicate=True),
-        Input("table-results", "data_previous"),
-        State("table-results", "data"),
-        State("graph", "figure"),
-        prevent_initial_call=True,
-    )
-    def remove_fit(
-        data_previous: list[dict[str, Any]],
-        data_current: list[dict[str, Any]],
-        fig: FigureDict,
-    ):
-        if not data_previous:
-            raise PreventUpdate
+    #     patched_fig["data"].append(fit_trace)
+    #     return patched_fig, result_df.to_dicts()
 
-        previous = pl.from_dicts(data_previous, schema=result_df_schema)
-        current = pl.from_dicts(data_current, schema=result_df_schema)
+    # @callback(
+    #     Output("store-graph", "data", allow_duplicate=True),
+    #     Input("table-results", "data_previous"),
+    #     State("table-results", "data"),
+    #     State("graph", "figure"),
+    #     prevent_initial_call=True,
+    # )
+    # def remove_fit(
+    #     data_previous: list[dict[str, Any]],
+    #     data_current: list[dict[str, Any]],
+    #     fig: FigureDict,
+    # ):
+    #     if not data_previous:
+    #         raise PreventUpdate
 
-        removed = previous.join(current, on=previous.columns, how="anti")
+    #     previous = pl.from_dicts(data_previous, schema=result_df_schema)
+    #     current = pl.from_dicts(data_current, schema=result_df_schema)
 
-        patched_fig = Patch()
-        trace_index = find_trace_index(fig, removed.item(0, "source_file"), removed.item(0, "start_index"))
-        if trace_index == -1:
-            raise PreventUpdate
+    #     removed = previous.join(current, on=previous.columns, how="anti")
 
-        del patched_fig["data"][trace_index]
-        return patched_fig
+    #     patched_fig = Patch()
+    #     trace_index = find_trace_index(fig, removed.item(0, "source_file"), removed.item(0, "start_index"))
+    #     if trace_index == -1:
+    #         raise PreventUpdate
+
+    #     del patched_fig["data"][trace_index]
+    #     return patched_fig
 
     # @callback(
     #     Output("store-graph", "data", allow_duplicate=True),
@@ -721,4 +735,4 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     with server_is_started:
         server_is_started.notify()
 
-    app.run(debug=False, use_reloader=False, host=host, port=port)
+    app.run(debug=True, use_reloader=False, host=host, port=port)
