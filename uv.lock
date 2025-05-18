@@ -139,6 +139,7 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5d/e3/d9eebd98cec05c9775313eedca336cc4b45f705b488bb37ed9796fd3988b/dash_mantine_components-1.2.0.tar.gz", hash = "sha256:443d019d046be6baffcb165898619b0e2db14247e74e31b4bb69e7a9581dc78f", size = 1112589 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/21/ed/22f3f3451c377be60b992d74499bf583055681bafcd8b61fbe49b4de2816/dash_mantine_components-1.2.0-py3-none-any.whl", hash = "sha256:29cd2dc1175074b79ceb8c2968f0d6f11943f383ab69e767a9e58ce2f3fbe70b", size = 1509611 },
+    { url = "https://files.pythonhosted.org/packages/21/ed/22f3f3451c377be60b992d74499bf583055681bafcd8b61fbe49b4de2816/dash_mantine_components-1.2.0-py3-none-any.whl", hash = "sha256:29cd2dc1175074b79ceb8c2968f0d6f11943f383ab69e767a9e58ce2f3fbe70b", size = 1509611 },
 ]
 
 [[package]]
