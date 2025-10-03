@@ -38,10 +38,7 @@ def start() -> None:
     dw = display.width
     dh = display.height
     min_size = (min(dw, 800), min(dh, 600))
-    maximize = False
-    if min_size == (dw, dh):
-        maximize = True
-
+    maximize = min_size == (dw, dh)
     webview.create_window(
         "O2View",
         f"http://{host}:{port}",

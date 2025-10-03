@@ -128,10 +128,10 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                 id="source-file",
                                 label="Source File",
                                 placeholder="Select one",
-                                searchable=True,
                                 checkIconPosition="right",
                                 maxDropdownHeight=300,
                                 data=GlobalState.instance().unique_files(),
+                                allowDeselect=False,
                                 inputWrapperOrder=["input", "label"],
                                 style={"width": "400px"},
                             ),
@@ -203,6 +203,9 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
                                     ],
                                 ),
                             ),
+                            # dmc.GridCol(
+                            #     span
+                            # )
                         ],
                     ),
                     dcc.Store(id="store-graph"),
@@ -265,4 +268,4 @@ def start_dash(host: str, port: str, server_is_started: "Condition") -> None:
     with server_is_started:
         server_is_started.notify()
 
-    app.run(debug=True, use_reloader=False, host=host, port=port)
+    app.run(debug=False, use_reloader=False, host=host, port=port)
